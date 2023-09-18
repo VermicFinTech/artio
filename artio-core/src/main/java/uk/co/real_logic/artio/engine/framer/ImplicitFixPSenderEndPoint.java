@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2024 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.engine.framer;
 
@@ -85,9 +87,9 @@ class ImplicitFixPSenderEndPoint extends FixPSenderEndPoint
 
             final int messageSize = readSofhMessageSize(directBuffer, offset);
 
-            if ((retransmitting && !retransmit) ||
-                (!retransmitting && retransmit) ||
-                reattemptBytesWritten > 0 ||
+            if ((retransmitting && !retransmit) || 
+                (!retransmitting && retransmit) || 
+                reattemptBytesWritten > 0 || 
                 (orderedDelivery && requiresReattempting))
             {
                 enqueue(directBuffer, offset, messageSize, retransmit);
