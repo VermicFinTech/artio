@@ -87,9 +87,9 @@ class ImplicitFixPSenderEndPoint extends FixPSenderEndPoint
 
             final int messageSize = readSofhMessageSize(directBuffer, offset);
 
-            if ((retransmitting && !retransmit) || 
-                (!retransmitting && retransmit) || 
-                reattemptBytesWritten > 0 || 
+            if ((retransmitting && !retransmit) ||
+                (!retransmitting && retransmit) ||
+                reattemptBytesWritten > 0 ||
                 (orderedDelivery && requiresReattempting))
             {
                 enqueue(directBuffer, offset, messageSize, retransmit);
