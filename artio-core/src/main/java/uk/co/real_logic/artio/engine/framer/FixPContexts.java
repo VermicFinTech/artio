@@ -24,19 +24,31 @@ import org.agrona.concurrent.EpochNanoClock;
 import uk.co.real_logic.artio.engine.FixPSessionInfo;
 import uk.co.real_logic.artio.engine.MappedFile;
 import uk.co.real_logic.artio.engine.logger.LoggerUtil;
-import uk.co.real_logic.artio.fixp.*;
+import uk.co.real_logic.artio.fixp.AbstractFixPStorage;
+import uk.co.real_logic.artio.fixp.FixPContext;
+import uk.co.real_logic.artio.fixp.FixPFirstMessageResponse;
+import uk.co.real_logic.artio.fixp.FixPKey;
+import uk.co.real_logic.artio.fixp.FixPProtocolFactory;
+import uk.co.real_logic.artio.fixp.InternalFixPContext;
 import uk.co.real_logic.artio.messages.FixPProtocolType;
 import uk.co.real_logic.artio.messages.MessageHeaderDecoder;
 import uk.co.real_logic.artio.messages.MessageHeaderEncoder;
 import uk.co.real_logic.artio.storage.messages.FixPContextWrapperDecoder;
 import uk.co.real_logic.artio.storage.messages.FixPContextWrapperEncoder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static uk.co.real_logic.artio.GatewayProcess.NO_CONNECTION_ID;
 import static uk.co.real_logic.artio.dictionary.generation.CodecUtil.MISSING_LONG;
-import static uk.co.real_logic.artio.fixp.FixPFirstMessageResponse.*;
+import static uk.co.real_logic.artio.fixp.FixPFirstMessageResponse.ESTABLISH_DUPLICATE_ID;
+import static uk.co.real_logic.artio.fixp.FixPFirstMessageResponse.NEGOTIATE_DUPLICATE_ID;
+import static uk.co.real_logic.artio.fixp.FixPFirstMessageResponse.NEGOTIATE_DUPLICATE_ID_BAD_VER;
 
 
 public class FixPContexts implements SessionContexts
@@ -62,7 +74,8 @@ public class FixPContexts implements SessionContexts
 
     private int offset;
 
-    FixPContexts(final MappedFile mappedFile, final ErrorHandler errorHandler, final EpochNanoClock epochNanoClock)
+    public FixPContexts(final MappedFile mappedFile, final ErrorHandler errorHandler,
+        final EpochNanoClock epochNanoClock)
     {
         this.mappedFile = mappedFile;
         this.buffer = mappedFile.buffer();
@@ -180,7 +193,7 @@ public class FixPContexts implements SessionContexts
         offset += length;
     }
 
-    int offset()
+    public int offset()
     {
         return offset;
     }
@@ -267,7 +280,7 @@ public class FixPContexts implements SessionContexts
         return lookupContext(sessionId) != null;
     }
 
-    InternalFixPContext lookupContext(final long sessionId)
+    public final InternalFixPContext lookupContext(final long sessionId)
     {
         final Iterator<Map.Entry<FixPKey, InternalFixPContext>> it = keyToContext.entrySet().iterator();
         while (it.hasNext())

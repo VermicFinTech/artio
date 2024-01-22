@@ -22,9 +22,19 @@ import java.lang.reflect.InvocationTargetException;
 
 public final class FixPProtocolFactory
 {
+    public static final String EXTERNAL_FQCN_PROP = "fix.protocol.fixp.external_fqcn";
+
     public static boolean isAcceptorImplemented(final FixPProtocolType fixPProtocolType)
     {
-        return fixPProtocolType == FixPProtocolType.BINARY_ENTRYPOINT;
+        switch (fixPProtocolType)
+        {
+            case BINARY_ENTRYPOINT:
+            case EXTERNAL:
+                return true;
+            case ILINK_3:
+            default:
+                return false;
+        }
     }
 
     public static FixPProtocol make(
@@ -37,6 +47,9 @@ public final class FixPProtocolFactory
 
             case BINARY_ENTRYPOINT:
                 return make("uk.co.real_logic.artio.binary_entrypoint.BinaryEntryPointProtocol", errorHandler);
+
+            case EXTERNAL:
+                return make(getEnvProp(EXTERNAL_FQCN_PROP, "Missing -D" + EXTERNAL_FQCN_PROP), errorHandler);
 
             default:
                 throw new IllegalArgumentException("Unknown protocol: " + protocol);
@@ -59,5 +72,34 @@ public final class FixPProtocolFactory
             }
             return null;
         }
+    }
+
+    /**
+     * Return environment variable or system property or supplied default value
+     *
+     * @param propName that will be automatically converted to environment variable using propToEnv(...)
+     * @param defaultValue to return if no env or prop found
+     * @return value
+     */
+    public static String getEnvProp(final String propName, final String defaultValue)
+    {
+        final String env = propToEnv(propName);
+        String val = System.getenv(env);
+        if (null == val || val.isEmpty())
+        {
+            val = System.getProperty(propName, defaultValue);
+        }
+        return val;
+    }
+
+    /**
+     * Convert a property to environment variable
+     *
+     * @param propName to convert
+     * @return environment variable name
+     */
+    public static String propToEnv(final String propName)
+    {
+        return propName.replace('.', '_').toUpperCase();
     }
 }

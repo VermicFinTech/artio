@@ -636,7 +636,6 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
     long saveReductSequenceUpdate(final long sessionId, final boolean resetInput)
     {
         checkState();
-
         final long position = outboundPublication.saveRedactSequenceUpdate(sessionId, 0, NO_REQUIRED_POSITION);
         if (position < 0 || !resetInput)
         {
