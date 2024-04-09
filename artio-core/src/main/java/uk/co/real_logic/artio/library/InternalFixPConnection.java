@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2024 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.library;
 
@@ -20,7 +22,12 @@ import io.aeron.logbuffer.ControlledFragmentHandler.Action;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.EpochNanoClock;
 import org.agrona.sbe.MessageEncoderFlyweight;
-import uk.co.real_logic.artio.fixp.*;
+import uk.co.real_logic.artio.fixp.AbstractFixPProxy;
+import uk.co.real_logic.artio.fixp.FixPConnection;
+import uk.co.real_logic.artio.fixp.FixPConnectionHandler;
+import uk.co.real_logic.artio.fixp.FixPContext;
+import uk.co.real_logic.artio.fixp.FixPMessageDissector;
+import uk.co.real_logic.artio.fixp.FixPMessageHeader;
 import uk.co.real_logic.artio.messages.DisconnectReason;
 import uk.co.real_logic.artio.protocol.GatewayPublication;
 
@@ -28,7 +35,11 @@ import java.util.concurrent.TimeUnit;
 
 import static io.aeron.logbuffer.ControlledFragmentHandler.Action.ABORT;
 import static io.aeron.logbuffer.ControlledFragmentHandler.Action.CONTINUE;
-import static uk.co.real_logic.artio.fixp.FixPConnection.State.*;
+import static uk.co.real_logic.artio.fixp.FixPConnection.State.AWAITING_KEEPALIVE;
+import static uk.co.real_logic.artio.fixp.FixPConnection.State.ESTABLISHED;
+import static uk.co.real_logic.artio.fixp.FixPConnection.State.RECV_FINISHED_SENDING;
+import static uk.co.real_logic.artio.fixp.FixPConnection.State.UNBINDING;
+import static uk.co.real_logic.artio.fixp.FixPConnection.State.UNBOUND;
 import static uk.co.real_logic.artio.messages.DisconnectReason.LOGOUT;
 
 public abstract class InternalFixPConnection implements FixPConnection

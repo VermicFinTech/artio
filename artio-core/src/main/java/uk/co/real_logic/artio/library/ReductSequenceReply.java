@@ -1,3 +1,6 @@
+/*
+ * Modifications copyright (C) 2024 - Vermiculus Financial Technology AB
+ */
 package uk.co.real_logic.artio.library;
 
 public class ReductSequenceReply extends LibraryReply<Boolean>
