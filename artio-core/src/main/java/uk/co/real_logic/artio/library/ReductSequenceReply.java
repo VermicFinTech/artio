@@ -3,11 +3,14 @@ package uk.co.real_logic.artio.library;
 public class ReductSequenceReply extends LibraryReply<Boolean>
 {
     private final long sessionId;
+    private final boolean resetInput;
 
-    ReductSequenceReply(final LibraryPoller libraryPoller, final long latestReplyArrivalTime, final long sessionId)
+    ReductSequenceReply(final LibraryPoller libraryPoller, final long latestReplyArrivalTime,
+        final long sessionId, final boolean resetInput)
     {
         super(libraryPoller, latestReplyArrivalTime);
         this.sessionId = sessionId;
+        this.resetInput = resetInput;
 
         if (libraryPoller.isConnected())
         {
@@ -19,7 +22,7 @@ public class ReductSequenceReply extends LibraryReply<Boolean>
     @Override
     protected void sendMessage()
     {
-        final long position = libraryPoller.saveReductSequenceUpdate(sessionId);
+        final long position = libraryPoller.saveReductSequenceUpdate(sessionId, resetInput);
         requiresResend = position < 0;
 
         if (!requiresResend)

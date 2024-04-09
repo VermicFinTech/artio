@@ -288,7 +288,8 @@ public class RecordingCoordinator implements AutoCloseable, RecordingDescriptorC
             final boolean isInbound = streamId == configuration.inboundLibraryStream();
             final RecordingIds recordingIds = isInbound ? inboundRecordingIds : outboundRecordingIds;
             final RecordingIdLookup lookup = isInbound ? framerOutboundLookup : framerInboundLookup;
-            final LibraryExtendPosition libraryExtendPosition = acquireRecording(streamId, recordingIds, FixEngine.ENGINE_LIBRARY_ID);
+            final LibraryExtendPosition libraryExtendPosition = acquireRecording(
+                streamId, recordingIds, FixEngine.ENGINE_LIBRARY_ID);
             final ExclusivePublication publication;
             if (libraryExtendPosition != null)
             {
@@ -389,14 +390,15 @@ public class RecordingCoordinator implements AutoCloseable, RecordingDescriptorC
     }
 
     private LibraryExtendPosition acquireRecording(final int streamId,
-                                                   final RecordingIds recordingIds,
-                                                   final int libraryId)
+        final RecordingIds recordingIds, final int libraryId)
     {
         libraryExtendPosition = null;
         long recordingId = recordingIds.free.remove(libraryId);
-        if (recordingId == NULL_RECORDING_ID) {
+        if (recordingId == NULL_RECORDING_ID)
+        {
             final Long2LongHashMap.ValueIterator it = recordingIds.free.values().iterator();
-            if (it.hasNext()) {
+            if (it.hasNext())
+            {
                 recordingId = it.nextValue();
                 it.remove();
             }
@@ -405,8 +407,10 @@ public class RecordingCoordinator implements AutoCloseable, RecordingDescriptorC
         return libraryExtendPosition;
     }
 
-    private boolean checkRecording(final int streamId, final long recordingId) {
-        if (recordingId == NULL_RECORDING_ID) {
+    private boolean checkRecording(final int streamId, final long recordingId)
+    {
+        if (recordingId == NULL_RECORDING_ID)
+        {
             return false;
         }
         final int count = archive.listRecording(recordingId, this);
