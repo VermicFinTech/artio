@@ -300,7 +300,8 @@ public class FixPContexts implements SessionContexts
             return context.key();
         }
 
-        public FixPContext context() {
+        public FixPContext context()
+        {
             return context;
         }
 

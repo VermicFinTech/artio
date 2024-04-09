@@ -436,9 +436,10 @@ public class FixLibrary extends GatewayProcess
         return poller.followerFixPSession(context, testTimeoutInMs);
     }
 
-    public Reply<Boolean> resetFollowerSequences(final long sessionId, final long testTimeoutInMs)
+    public Reply<Boolean> resetFollowerSequences(
+        final long sessionId, final boolean resetInput, final long testTimeoutInMs)
     {
-        return poller.saveReductSequenceUpdate(sessionId, testTimeoutInMs);
+        return poller.saveReductSequenceUpdate(sessionId, resetInput, testTimeoutInMs);
     }
 
     /**

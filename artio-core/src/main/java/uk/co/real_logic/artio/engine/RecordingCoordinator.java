@@ -389,14 +389,15 @@ public class RecordingCoordinator implements AutoCloseable, RecordingDescriptorC
     }
 
     private LibraryExtendPosition acquireRecording(final int streamId,
-                                                   final RecordingIds recordingIds,
-                                                   final int libraryId)
+        final RecordingIds recordingIds, final int libraryId)
     {
         libraryExtendPosition = null;
         long recordingId = recordingIds.free.remove(libraryId);
-        if (recordingId == NULL_RECORDING_ID) {
+        if (recordingId == NULL_RECORDING_ID)
+        {
             final Long2LongHashMap.ValueIterator it = recordingIds.free.values().iterator();
-            if (it.hasNext()) {
+            if (it.hasNext())
+            {
                 recordingId = it.nextValue();
                 it.remove();
             }
@@ -405,8 +406,10 @@ public class RecordingCoordinator implements AutoCloseable, RecordingDescriptorC
         return libraryExtendPosition;
     }
 
-    private boolean checkRecording(final int streamId, final long recordingId) {
-        if (recordingId == NULL_RECORDING_ID) {
+    private boolean checkRecording(final int streamId, final long recordingId)
+    {
+        if (recordingId == NULL_RECORDING_ID)
+        {
             return false;
         }
         final int count = archive.listRecording(recordingId, this);

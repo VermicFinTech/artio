@@ -439,11 +439,12 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
             length);
     }
 
-    public Reply<Boolean> saveReductSequenceUpdate(final long sessionId, final long testTimeoutInMs)
+    public Reply<Boolean> saveReductSequenceUpdate(final long sessionId,
+        final boolean resetInput, final long testTimeoutInMs)
     {
         checkState();
 
-        return new ReductSequenceReply(this, timeInMs() + testTimeoutInMs, sessionId);
+        return new ReductSequenceReply(this, timeInMs() + testTimeoutInMs, sessionId, resetInput);
     }
 
     public void readMetaData(final long sessionId, final MetadataHandler handler)
@@ -632,15 +633,16 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
             libraryId, sessionId, correlationId, lastReceivedSequenceNumber, sequenceIndex);
     }
 
-    long saveReductSequenceUpdate(final long sessionId)
+    long saveReductSequenceUpdate(final long sessionId, final boolean resetInput)
     {
         checkState();
-        final long position = inboundPublication.saveRedactSequenceUpdate(sessionId, 0, NO_REQUIRED_POSITION);
-        if (position < 0)
+
+        final long position = outboundPublication.saveRedactSequenceUpdate(sessionId, 0, NO_REQUIRED_POSITION);
+        if (position < 0 || !resetInput)
         {
             return position;
         }
-        return outboundPublication.saveRedactSequenceUpdate(sessionId, 0, NO_REQUIRED_POSITION);
+        return inboundPublication.saveRedactSequenceUpdate(sessionId, 0, NO_REQUIRED_POSITION);
     }
 
     long saveFollowerSessionRequest(
