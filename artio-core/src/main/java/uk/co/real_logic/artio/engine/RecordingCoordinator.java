@@ -288,7 +288,8 @@ public class RecordingCoordinator implements AutoCloseable, RecordingDescriptorC
             final boolean isInbound = streamId == configuration.inboundLibraryStream();
             final RecordingIds recordingIds = isInbound ? inboundRecordingIds : outboundRecordingIds;
             final RecordingIdLookup lookup = isInbound ? framerOutboundLookup : framerInboundLookup;
-            final LibraryExtendPosition libraryExtendPosition = acquireRecording(streamId, recordingIds, ENGINE_LIBRARY_ID);
+            final LibraryExtendPosition libraryExtendPosition = acquireRecording(
+                streamId, recordingIds, FixEngine.ENGINE_LIBRARY_ID);
             final ExclusivePublication publication;
             if (libraryExtendPosition != null)
             {
