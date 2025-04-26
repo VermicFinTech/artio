@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.engine.framer;
 
@@ -19,9 +21,11 @@ import org.agrona.ErrorHandler;
 import org.agrona.concurrent.EpochClock;
 import org.agrona.concurrent.UnsafeBuffer;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
+import uk.co.real_logic.artio.engine.FixEngine;
 import uk.co.real_logic.artio.engine.logger.SequenceNumberIndexReader;
 import uk.co.real_logic.artio.fixp.AbstractFixPProxy;
 import uk.co.real_logic.artio.fixp.FixPFirstMessageResponse;
+import uk.co.real_logic.artio.fixp.FixPProtocolFactory;
 import uk.co.real_logic.artio.fixp.InternalFixPContext;
 import uk.co.real_logic.artio.messages.DisconnectReason;
 import uk.co.real_logic.artio.messages.FixPProtocolType;
@@ -39,6 +43,8 @@ public class FixPGatewaySessions extends GatewaySessions
 {
     static final int ACCEPTED_HEADER_LENGTH = MessageHeaderEncoder.ENCODED_LENGTH +
         InboundFixPConnectEncoder.BLOCK_LENGTH;
+    static final int FORCE_LOGOUT_MS = Integer.parseInt(FixPProtocolFactory
+        .getEnvProp("fix.protocol.fixp.force_logout_ms", "1000"));
 
     private final EngineConfiguration engineConfiguration;
     private final FixPContexts fixPContexts;
@@ -116,6 +122,8 @@ public class FixPGatewaySessions extends GatewaySessions
 
         private FixPFirstMessageResponse fixPFirstMessageResponse;
         private Enum<?> rejectCode;
+        private long forceLogoutStartTime;
+        private boolean forceLogoutSent;
 
         FixPPendingAcceptorLogon(
             final long sessionId,
@@ -172,9 +180,15 @@ public class FixPGatewaySessions extends GatewaySessions
 
         protected void onAuthenticated()
         {
+            final long connId = fixPContexts.onAuthenticated(sessionId, identification, connectionId);
+            if (connId != connectionId)
+            {
+                checkForceLogout(connId);
+                return;
+            }
+
             final FixPGatewaySession session = (FixPGatewaySession)this.session;
             session.authenticated();
-
             if (framer.onFixPLogonMessageReceived(session, sessionId))
             {
                 setState(AuthenticationState.ACCEPTED);
@@ -203,6 +217,29 @@ public class FixPGatewaySessions extends GatewaySessions
                 {
                     setState(AuthenticationState.ACCEPTED);
                 }
+            }
+        }
+
+        protected void checkForceLogout(final long connId)
+        {
+            final long now = System.currentTimeMillis();
+            if (forceLogoutStartTime == 0)
+            {
+                forceLogoutStartTime = now;
+            }
+            if (!forceLogoutSent && now - forceLogoutStartTime >= FORCE_LOGOUT_MS)
+            {
+                forceLogoutSent = true;
+                final GatewaySession gwySess = sessionById(sessionId);
+                final int libId = gwySess != null ? gwySess.libraryId() : FixEngine.ENGINE_LIBRARY_ID;
+                framer.onRequestDisconnect(libId, connId, DisconnectReason.DUPLICATE_SESSION);
+            }
+            else if (forceLogoutSent && now - forceLogoutStartTime >= FORCE_LOGOUT_MS * 3)
+            {
+                final FixPFirstMessageResponse rsp = identification.fromNegotiate() ?
+                    FixPFirstMessageResponse.NEGOTIATE_DUPLICATE_ID :
+                    FixPFirstMessageResponse.ESTABLISH_DUPLICATE_ID;
+                internalReject(rsp, null);
             }
         }
 

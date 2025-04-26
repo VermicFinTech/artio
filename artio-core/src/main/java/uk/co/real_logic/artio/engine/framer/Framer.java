@@ -12,7 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
+
 package uk.co.real_logic.artio.engine.framer;
 
 import io.aeron.*;
@@ -2711,6 +2714,10 @@ class Framer implements Agent, EngineEndPointHandler, ProtocolHandler
                 // Duplicate negotiate here means we've already got this session so we just return it.
                 if (resp == FixPFirstMessageResponse.OK || resp == NEGOTIATE_DUPLICATE_ID)
                 {
+                    if (resp == FixPFirstMessageResponse.OK)
+                    {
+                        fixPContexts.storeUpdateContext(sessionId, context, NO_CONNECTION_ID);
+                    }
                     saveFollowerSessionReply(libraryId, correlationId, sessionId);
                 }
                 else if (resp == NEGOTIATE_DUPLICATE_ID_BAD_VER)

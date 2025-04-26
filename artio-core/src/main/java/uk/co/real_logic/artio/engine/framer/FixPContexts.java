@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Modifications copyright (C) 2024 - Vermiculus Financial Technology AB
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.engine.framer;
 
@@ -58,6 +58,8 @@ public class FixPContexts implements SessionContexts
     public static final int WRAPPER_LENGTH = FixPContextWrapperEncoder.BLOCK_LENGTH;
     private final EnumMap<FixPProtocolType, AbstractFixPStorage> typeToStorage = new EnumMap<>(FixPProtocolType.class);
     private final Function<FixPProtocolType, AbstractFixPStorage> makeStorageFunc = this::makeStorage;
+    private final boolean logoutExisting = Boolean.parseBoolean(FixPProtocolFactory
+        .getEnvProp("fix.protocol.fixp.logout_existing", "true"));
 
     private final MappedFile mappedFile;
     private final AtomicBuffer buffer;
@@ -212,24 +214,9 @@ public class FixPContexts implements SessionContexts
         final long duplicateConnection = authenticatedSessionIdToConnectionId.get(sessionId);
         final FixPKey key = context.key();
         final FixPContext oldContext = keyToContext.get(key);
-        if (duplicateConnection == MISSING_LONG || duplicateConnection == NO_CONNECTION_ID)
+        if (logoutExisting || (duplicateConnection == MISSING_LONG || duplicateConnection == NO_CONNECTION_ID))
         {
-            authenticatedSessionIdToConnectionId.put(sessionId, connectionId);
-
-            final FixPFirstMessageResponse rejectReason = context.checkAccept(oldContext, ignoreFromNegotiate);
-            if (rejectReason == FixPFirstMessageResponse.OK)
-            {
-                if (oldContext == null)
-                {
-                    saveNewContext(context);
-                }
-                else
-                {
-                    updateContext(context);
-                }
-                addContext(context);
-            }
-            return rejectReason;
+            return context.checkAccept(oldContext, ignoreFromNegotiate);
         }
         else
         {
@@ -241,6 +228,34 @@ public class FixPContexts implements SessionContexts
 
             return ESTABLISH_DUPLICATE_ID;
         }
+    }
+
+    public final void storeUpdateContext(final long sessionId,
+        final InternalFixPContext context, final long connectionId)
+    {
+        authenticatedSessionIdToConnectionId.put(sessionId, connectionId);
+        final FixPKey key = context.key();
+        final FixPContext oldContext = keyToContext.get(key);
+        if (oldContext == null)
+        {
+            saveNewContext(context);
+        }
+        else
+        {
+            updateContext(context);
+        }
+        addContext(context);
+    }
+
+    final long onAuthenticated(final long sessionId, final InternalFixPContext context, final long connectionId)
+    {
+        final long duplicateConnection = authenticatedSessionIdToConnectionId.get(sessionId);
+        if (duplicateConnection == MISSING_LONG || duplicateConnection == NO_CONNECTION_ID)
+        {
+            storeUpdateContext(sessionId, context, connectionId);
+            return connectionId;
+        }
+        return duplicateConnection;
     }
 
     public void onDisconnect(final long connectionId)

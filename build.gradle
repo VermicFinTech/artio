@@ -195,6 +195,7 @@ subprojects {
             'fix.core.close_checker': 'true',
             'fix.core.debug': System.getProperty("fix.core.debug"),
             'fix.core.ci': System.getProperty("fix.core.ci"),
+            'fix.protocol.fixp.logout_existing': 'false',
             'aeron.dir.warn.if.exists': 'false',
             'aeron.use.windows.high.res.timer': 'true',
             'aeron.term.buffer.sparse.file': 'true',
