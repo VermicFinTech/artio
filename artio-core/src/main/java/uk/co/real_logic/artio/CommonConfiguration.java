@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio;
 
@@ -308,6 +310,7 @@ public class CommonConfiguration
     private ResendRequestController resendRequestController = DEFAULT_RESEND_REQUEST_CONTROLLER;
     private int forcedHeartbeatIntervalInS = NO_FORCED_HEARTBEAT_INTERVAL;
     private boolean disableHeartbeatRepliesToTestRequests = false;
+    private Object sessionConstructorContext;
 
     private final AtomicBoolean isConcluded = new AtomicBoolean(false);
 
@@ -838,6 +841,18 @@ public class CommonConfiguration
         return this;
     }
 
+    /**
+     * Configure an arbitrary context to use in session instance construction.
+     *
+     * @param sessionConstructorContext user session constructor context
+     * @return this
+     */
+    public CommonConfiguration sessionConstructorContext(final Object sessionConstructorContext)
+    {
+        this.sessionConstructorContext = sessionConstructorContext;
+        return this;
+    }
+
     // ------------------------
     // END SETTERS
     // ------------------------
@@ -1009,6 +1024,11 @@ public class CommonConfiguration
     public ResendRequestController resendRequestController()
     {
         return resendRequestController;
+    }
+
+    public Object sessionConstructorContext()
+    {
+        return sessionConstructorContext;
     }
 
     // ------------------------

@@ -20,8 +20,9 @@ package uk.co.real_logic.artio.engine.framer;
 import org.agrona.ErrorHandler;
 import org.agrona.concurrent.EpochClock;
 import org.agrona.concurrent.UnsafeBuffer;
+import uk.co.real_logic.artio.DebugLogger;
+import uk.co.real_logic.artio.LogTag;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
-import uk.co.real_logic.artio.engine.FixEngine;
 import uk.co.real_logic.artio.engine.logger.SequenceNumberIndexReader;
 import uk.co.real_logic.artio.fixp.AbstractFixPProxy;
 import uk.co.real_logic.artio.fixp.FixPFirstMessageResponse;
@@ -32,10 +33,12 @@ import uk.co.real_logic.artio.messages.FixPProtocolType;
 import uk.co.real_logic.artio.messages.InboundFixPConnectEncoder;
 import uk.co.real_logic.artio.messages.MessageHeaderEncoder;
 import uk.co.real_logic.artio.protocol.GatewayPublication;
+import uk.co.real_logic.artio.util.CharFormatter;
 import uk.co.real_logic.artio.util.MutableAsciiBuffer;
 import uk.co.real_logic.artio.validation.FixPAuthenticationProxy;
 
 import java.io.IOException;
+import java.util.List;
 
 import static uk.co.real_logic.artio.engine.framer.TcpChannel.UNKNOWN_SEQ_NUM;
 
@@ -46,6 +49,8 @@ public class FixPGatewaySessions extends GatewaySessions
     static final int FORCE_LOGOUT_MS = Integer.parseInt(FixPProtocolFactory
         .getEnvProp("fix.protocol.fixp.force_logout_ms", "1000"));
 
+    private final CharFormatter awaitForceLogoutFormatter = new CharFormatter(
+        "Await force-logout for session %s, conn %s old-conn %s");
     private final EngineConfiguration engineConfiguration;
     private final FixPContexts fixPContexts;
 
@@ -225,22 +230,46 @@ public class FixPGatewaySessions extends GatewaySessions
             final long now = System.currentTimeMillis();
             if (forceLogoutStartTime == 0)
             {
+                DebugLogger.log(LogTag.FIXP_SESSION, awaitForceLogoutFormatter,
+                    sessionId, connectionId, connId);
                 forceLogoutStartTime = now;
             }
             if (!forceLogoutSent && now - forceLogoutStartTime >= FORCE_LOGOUT_MS)
             {
                 forceLogoutSent = true;
-                final GatewaySession gwySess = sessionById(sessionId);
-                final int libId = gwySess != null ? gwySess.libraryId() : FixEngine.ENGINE_LIBRARY_ID;
-                framer.onRequestDisconnect(libId, connId, DisconnectReason.DUPLICATE_SESSION);
+                framer.onRequestDisconnect(getLibraryId(), connId, DisconnectReason.DUPLICATE_SESSION);
             }
-            else if (forceLogoutSent && now - forceLogoutStartTime >= FORCE_LOGOUT_MS * 3)
+        }
+
+        /**
+         * Return the library id for existing session to force disconnect.
+         * Note that we cannot use GatewaySessions but must use sessions in framer library!
+         *
+         * @return id of library for session
+         */
+        protected int getLibraryId()
+        {
+            // Initialize lib query
+            final QueryLibrariesCommand libCmd = new QueryLibrariesCommand();
+            framer.onQueryLibraries(libCmd);
+            // Find library for session
+            int defaultLibId = 0;
+            final List<LibraryInfo> libs = libCmd.resultIfPresent();
+            if (libs != null)
             {
-                final FixPFirstMessageResponse rsp = identification.fromNegotiate() ?
-                    FixPFirstMessageResponse.NEGOTIATE_DUPLICATE_ID :
-                    FixPFirstMessageResponse.ESTABLISH_DUPLICATE_ID;
-                internalReject(rsp, null);
+                for (int i = 0; i < libs.size(); i++)
+                {
+                    if (libs.get(i) instanceof LiveLibraryInfo liveLib)
+                    {
+                        defaultLibId = liveLib.libraryId();
+                        if (liveLib.lookupSessionById(sessionId) != null)
+                        {
+                            return liveLib.libraryId();
+                        }
+                    }
+                }
             }
+            return defaultLibId;
         }
 
         protected void encodeRejectMessage()
