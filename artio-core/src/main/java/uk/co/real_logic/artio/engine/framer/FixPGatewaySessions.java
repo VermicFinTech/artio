@@ -53,6 +53,7 @@ public class FixPGatewaySessions extends GatewaySessions
         "Await force-logout for session %s, conn %s old-conn %s");
     private final EngineConfiguration engineConfiguration;
     private final FixPContexts fixPContexts;
+    private final QueryLibrariesCommand libCmd = new QueryLibrariesCommand();
 
     FixPGatewaySessions(
         final EpochClock epochClock,
@@ -129,6 +130,7 @@ public class FixPGatewaySessions extends GatewaySessions
         private Enum<?> rejectCode;
         private long forceLogoutStartTime;
         private boolean forceLogoutSent;
+        private int defaultLibraryId;
 
         FixPPendingAcceptorLogon(
             final long sessionId,
@@ -185,10 +187,8 @@ public class FixPGatewaySessions extends GatewaySessions
 
         protected void onAuthenticated()
         {
-            final long connId = fixPContexts.onAuthenticated(sessionId, identification, connectionId);
-            if (connId != connectionId)
+            if (!checkLogoutExisting())
             {
-                checkForceLogout(connId);
                 return;
             }
 
@@ -225,7 +225,26 @@ public class FixPGatewaySessions extends GatewaySessions
             }
         }
 
-        protected void checkForceLogout(final long connId)
+        protected boolean checkLogoutExisting()
+        {
+            final GatewaySession libSess = getLibrarySession();
+            if (libSess != null && !libSess.isOffline())
+            {
+                checkForceLogout(libSess.libraryId(), libSess.connectionId());
+                return false;
+            }
+
+            final long connId = fixPContexts.onAuthenticated(sessionId, identification, connectionId);
+            if (connId != connectionId)
+            {
+                checkForceLogout(libSess != null ? libSess.libraryId() : defaultLibraryId, connId);
+                return false;
+            }
+
+            return true;
+        }
+
+        protected void checkForceLogout(final int libraryId, final long connId)
         {
             final long now = System.currentTimeMillis();
             if (forceLogoutStartTime == 0)
@@ -237,39 +256,48 @@ public class FixPGatewaySessions extends GatewaySessions
             if (!forceLogoutSent && now - forceLogoutStartTime >= FORCE_LOGOUT_MS)
             {
                 forceLogoutSent = true;
-                framer.onRequestDisconnect(getLibraryId(), connId, DisconnectReason.DUPLICATE_SESSION);
+                framer.onRequestDisconnect(libraryId, connId, DisconnectReason.DUPLICATE_SESSION);
             }
         }
 
         /**
-         * Return the library id for existing session to force disconnect.
-         * Note that we cannot use GatewaySessions but must use sessions in framer library!
+         * Return the existing library session to force disconnect.
+         * Note that we cannot use GatewaySessions since it is not updated with library info!
          *
-         * @return id of library for session
+         * @return library gateway session
          */
-        protected int getLibraryId()
+        protected GatewaySession getLibrarySession()
         {
-            // Initialize lib query
-            final QueryLibrariesCommand libCmd = new QueryLibrariesCommand();
-            framer.onQueryLibraries(libCmd);
             // Find library for session
-            int defaultLibId = 0;
-            final List<LibraryInfo> libs = libCmd.resultIfPresent();
+            final List<LibraryInfo> libs = getLibraries();
             if (libs != null)
             {
                 for (int i = 0; i < libs.size(); i++)
                 {
                     if (libs.get(i) instanceof LiveLibraryInfo liveLib)
                     {
-                        defaultLibId = liveLib.libraryId();
-                        if (liveLib.lookupSessionById(sessionId) != null)
+                        defaultLibraryId = liveLib.libraryId();
+                        final GatewaySession sess = liveLib.lookupSessionById(sessionId);
+                        if (sess != null)
                         {
-                            return liveLib.libraryId();
+                            return sess;
                         }
                     }
                 }
             }
-            return defaultLibId;
+            return null;
+        }
+
+        protected List<LibraryInfo> getLibraries()
+        {
+            final List<LibraryInfo> libs = libCmd.resultIfPresent();
+            if (libs != null && libs.size() > 1)
+            {
+                return libs;
+            }
+            // Initialize lib query
+            framer.onQueryLibraries(libCmd);
+            return libCmd.resultIfPresent();
         }
 
         protected void encodeRejectMessage()
