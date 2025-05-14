@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.engine.logger;
 
@@ -99,7 +101,7 @@ public class FixPReplayerSession extends ReplayerSession
 
     MessageTracker messageTracker()
     {
-        return new FixPMessageTracker(this, binaryParser, (endSeqNo - beginSeqNo) + 1);
+        return new FixPMessageTracker(this, binaryParser, (endSeqNo - beginSeqNo) + 1, sessionId);
     }
 
     public boolean attemptReplay()
@@ -125,7 +127,7 @@ public class FixPReplayerSession extends ReplayerSession
 
             case REPLAYING:
             {
-                if (replayOperation.pollReplay())
+                if (replayOperation == null || replayOperation.pollReplay())
                 {
                     DebugLogger.log(REPLAY_ATTEMPT, "ReplayerSession: REPLAYING step");
                     state = State.SEND_COMPLETE_MESSAGE;
@@ -135,7 +137,7 @@ public class FixPReplayerSession extends ReplayerSession
 
             case CLOSING:
             {
-                return replayOperation.pollReplay();
+                return replayOperation != null ? replayOperation.pollReplay() : true;
             }
 
             default:

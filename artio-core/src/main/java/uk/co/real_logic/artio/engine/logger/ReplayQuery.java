@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.engine.logger;
 
@@ -35,14 +37,19 @@ import uk.co.real_logic.artio.util.CharFormatter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.LongFunction;
 
 import static io.aeron.Aeron.NULL_VALUE;
 import static io.aeron.CommonContext.IPC_CHANNEL;
 import static io.aeron.logbuffer.FrameDescriptor.FRAME_ALIGNMENT;
 import static org.agrona.UnsafeAccess.UNSAFE;
 import static uk.co.real_logic.artio.DebugLogger.IS_REPLAY_ATTEMPT_ENABLED;
-import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.*;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.RECORD_LENGTH;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.beginChangeVolatile;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.endChangeVolatile;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.listReplayIndexSessionIds;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.offsetInSegment;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.replayIndexHeaderFile;
+import static uk.co.real_logic.artio.engine.logger.ReplayIndexDescriptor.replayIndexSegmentFile;
 import static uk.co.real_logic.artio.engine.logger.Replayer.MOST_RECENT_MESSAGE;
 
 /**
@@ -59,8 +66,8 @@ public class ReplayQuery implements AutoCloseable
         "beginSequenceNumber=%s,beginSequenceIndex=%s,endSequenceNumber=%s,endSequenceIndex=%s");
     private final CharFormatter onRowFormatter = new CharFormatter("ReplayQuery:onRow," +
         "beginPosition=%s,recordingId=%s,sequenceNumber=%s,sequenceIndex=%s");
-
-    private final LongFunction<SessionQuery> newSessionQuery = this::newSessionQuery;
+    private final CharFormatter errorFormatter = new CharFormatter(
+        "Error creating query for session %d! %s");
 
     private final Long2ObjectCache<SessionQuery> fixSessionToIndex;
     private final String logFileDir;
@@ -163,7 +170,16 @@ public class ReplayQuery implements AutoCloseable
 
     private SessionQuery lookupSessionQuery(final long sessionId)
     {
-        return fixSessionToIndex.computeIfAbsent(sessionId, newSessionQuery);
+        SessionQuery query = fixSessionToIndex.get(sessionId);
+        if (query == null)
+        {
+            query = newSessionQuery(sessionId);
+            if (query != null)
+            {
+                fixSessionToIndex.put(sessionId, query);
+            }
+        }
+        return query;
     }
 
     public void close()
@@ -186,6 +202,7 @@ public class ReplayQuery implements AutoCloseable
         }
         catch (final IllegalStateException e)
         {
+            DebugLogger.log(LogTag.REPLAY, errorFormatter, fixSessionId, e.toString());
             errorHandler.onError(new IllegalStateException(
                 "Unable to create session query for: " + fixSessionId + " probably due to this session's sequence " +
                 "numbers being reset or files removed ", e));

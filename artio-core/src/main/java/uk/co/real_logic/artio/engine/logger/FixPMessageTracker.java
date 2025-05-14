@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2025 - Vermiculus Financial Technology AB
  */
 package uk.co.real_logic.artio.engine.logger;
 
@@ -29,17 +31,22 @@ import static io.aeron.logbuffer.ControlledFragmentHandler.Action.CONTINUE;
 
 public class FixPMessageTracker extends MessageTracker
 {
+    private final FixPMessageDecoder fixMsgDecoder;
     private final AbstractFixPParser fixPParser;
+    private final long sessionId;
     private int totalMessages;
 
     public FixPMessageTracker(
         final ControlledFragmentHandler messageHandler,
         final AbstractFixPParser fixPParser,
-        final int totalMessages)
+        final int totalMessages,
+        final long sessionId)
     {
         super(LogTag.REPLAY, messageHandler);
         this.fixPParser = fixPParser;
         this.totalMessages = totalMessages;
+        this.sessionId = sessionId;
+        this.fixMsgDecoder = new FixPMessageDecoder();
     }
 
     public Action onFragment(
@@ -52,6 +59,11 @@ public class FixPMessageTracker extends MessageTracker
         {
             // NB: we can aggregate contiguous ranges of business messages and we ignore session messages when indexing
             // So we need to filter out the session messages here on replay.
+            fixMsgDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+            if (fixMsgDecoder.sessionId() != sessionId)
+            {
+                return CONTINUE;
+            }
 
             final int encoderOffset = offset + MessageHeaderEncoder.ENCODED_LENGTH;
             final int headerOffset = encoderOffset + SimpleOpenFramingHeader.SOFH_LENGTH +
