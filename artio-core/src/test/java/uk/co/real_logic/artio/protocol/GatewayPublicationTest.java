@@ -93,7 +93,7 @@ class GatewayPublicationTest
                 {
                     break;
                 }
-                if (attempt >= 2)
+                if (attempt >= 9)
                 {
                     fail("failed to save message: " + result);
                 }

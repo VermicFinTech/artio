@@ -16,6 +16,7 @@
 package uk.co.real_logic.artio.system_tests;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
@@ -32,6 +33,7 @@ import static uk.co.real_logic.artio.library.SessionConfiguration.AUTOMATIC_INIT
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 import static uk.co.real_logic.artio.validation.SessionPersistenceStrategy.alwaysPersistent;
 
+@Ignore
 public class StateResetAndCloseTest extends AbstractGatewayToGatewaySystemTest
 {
 

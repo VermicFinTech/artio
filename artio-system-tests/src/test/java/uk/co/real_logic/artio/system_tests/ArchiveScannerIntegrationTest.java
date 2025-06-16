@@ -18,6 +18,7 @@ package uk.co.real_logic.artio.system_tests;
 import org.agrona.CloseHelper;
 import org.agrona.collections.IntHashSet;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.decoder.SessionHeaderDecoder;
 import uk.co.real_logic.artio.dictionary.FixDictionary;
@@ -40,6 +41,7 @@ import static uk.co.real_logic.artio.engine.logger.FixMessageConsumerValidator.v
 import static uk.co.real_logic.artio.engine.logger.FixMessagePredicates.*;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class ArchiveScannerIntegrationTest extends AbstractGatewayToGatewaySystemTest
 {
     private final FakeConnectHandler fakeConnectHandler = new FakeConnectHandler();

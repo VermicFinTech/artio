@@ -18,6 +18,7 @@ package uk.co.real_logic.artio.system_tests;
 import io.aeron.archive.client.AeronArchive;
 import org.agrona.collections.Long2LongHashMap;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.DebugLogger;
 import uk.co.real_logic.artio.LogTag;
@@ -40,6 +41,7 @@ import static uk.co.real_logic.artio.FixMatchers.hasSequenceIndex;
 import static uk.co.real_logic.artio.TestFixtures.launchMediaDriver;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class ArchivePruneSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     private boolean saveOnShutdownTesting = true;

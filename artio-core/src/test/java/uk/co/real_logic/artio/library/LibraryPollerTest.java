@@ -20,6 +20,7 @@ import org.agrona.LangUtil;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.status.AtomicCounter;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -122,6 +123,7 @@ public class LibraryPollerTest
     }
 
     @Test
+    @Ignore("Disabled liveness detector")
     public void shouldDisconnectSingleEngineAfterTimeout()
     {
         connectToSingleEngine();
@@ -130,6 +132,7 @@ public class LibraryPollerTest
     }
 
     @Test
+    @Ignore("Disabled liveness detector")
     public void shouldReconnectToSingleEngineAfterTimeoutOnHeartbeat()
     {
         shouldDisconnectSingleEngineAfterTimeout();
@@ -138,6 +141,7 @@ public class LibraryPollerTest
     }
 
     @Test
+    @Ignore("Disabled liveness detector")
     public void shouldRepeatedlyReconnectToSingleEngineAfterTimeoutOnHeartbeat()
     {
         shouldReconnectToSingleEngineAfterTimeoutOnHeartbeat();

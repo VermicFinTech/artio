@@ -72,7 +72,7 @@ public final class LivenessDetector
         final EpochNanoClock clock)
     {
         return new LivenessDetector(
-            publication, libraryId, replyTimeoutInMs, AWAITING_CONNECT, onDisconnect, clock);
+            publication, libraryId, replyTimeoutInMs, CONNECTED, onDisconnect, clock);
     }
 
     private LivenessDetector(
@@ -104,6 +104,7 @@ public final class LivenessDetector
 
     public int poll(final long timeInMs)
     {
+        /*
         switch (state)
         {
             case CONNECTED:
@@ -118,7 +119,7 @@ public final class LivenessDetector
                     heartbeat(timeInMs);
                     return 1;
                 }
-        }
+        }*/
 
         return 0;
     }

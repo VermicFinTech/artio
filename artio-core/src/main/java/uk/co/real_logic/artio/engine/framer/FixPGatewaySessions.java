@@ -40,6 +40,7 @@ import uk.co.real_logic.artio.validation.FixPAuthenticationProxy;
 import java.io.IOException;
 import java.util.List;
 
+import static io.aeron.Publication.BACK_PRESSURED;
 import static uk.co.real_logic.artio.engine.framer.TcpChannel.UNKNOWN_SEQ_NUM;
 
 public class FixPGatewaySessions extends GatewaySessions
@@ -216,7 +217,19 @@ public class FixPGatewaySessions extends GatewaySessions
 
                 if (position < 0)
                 {
-                    System.out.println("position = " + position); // TODO
+                    if (position == BACK_PRESSURED)
+                    {
+                        DebugLogger.log(LogTag.FIXP_SESSION,
+                            "Back pressured on accepted logon for session %d and streamId %d",
+                            sessionId, inboundPublication.dataPublication().streamId());
+                        setState(AuthenticationState.REJECTED); // TODO: handle back pressure properly
+                        reject(DisconnectReason.AUTHENTICATION_TIMEOUT);
+                    }
+                    else
+                    {
+                        DebugLogger.log(LogTag.FIXP_SESSION, "Failed to send accepted logon for session %d: %s",
+                            sessionId, position);
+                    }
                 }
                 else
                 {

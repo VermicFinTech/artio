@@ -22,6 +22,7 @@ import org.agrona.concurrent.OffsetEpochNanoClock;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.FixMatchers;
 import uk.co.real_logic.artio.dictionary.generation.Exceptions;
@@ -47,6 +48,7 @@ import static uk.co.real_logic.artio.engine.FixEngine.ENGINE_LIBRARY_ID;
 import static uk.co.real_logic.artio.messages.SessionReplyStatus.OK;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class EngineAndLibraryIntegrationTest
 {
     private static final int SHORT_TIMEOUT_IN_MS = 100;

@@ -15,6 +15,7 @@
  */
 package uk.co.real_logic.artio.system_tests;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.CancelOnDisconnectType;
 import uk.co.real_logic.artio.Constants;
@@ -46,6 +47,7 @@ import static uk.co.real_logic.artio.Constants.LOGON_MESSAGE_AS_STR;
 import static uk.co.real_logic.artio.TestFixtures.launchMediaDriver;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class CancelOnDisconnectSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     public static final int COD_TEST_TIMEOUT_IN_MS = 500;

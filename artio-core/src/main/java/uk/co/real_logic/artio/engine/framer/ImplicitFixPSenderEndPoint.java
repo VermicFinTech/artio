@@ -124,7 +124,7 @@ class ImplicitFixPSenderEndPoint extends FixPSenderEndPoint
         {
             errorHandler.onError(e);
 
-            receiverEndPoint.disconnectEndpoint(DisconnectReason.EXCEPTION);
+            removeEndpoint(DisconnectReason.EXCEPTION);
         }
 
         return CONTINUE;

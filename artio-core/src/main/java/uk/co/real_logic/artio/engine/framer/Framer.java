@@ -70,6 +70,7 @@ import static org.agrona.concurrent.status.CountersReader.NULL_COUNTER_ID;
 import static uk.co.real_logic.artio.GatewayProcess.NO_CONNECTION_ID;
 import static uk.co.real_logic.artio.GatewayProcess.NO_CORRELATION_ID;
 import static uk.co.real_logic.artio.LogTag.APPLICATION_HEARTBEAT;
+import static uk.co.real_logic.artio.LogTag.FIXP_SESSION;
 import static uk.co.real_logic.artio.LogTag.FIX_CONNECTION;
 import static uk.co.real_logic.artio.LogTag.LIBRARY_MANAGEMENT;
 import static uk.co.real_logic.artio.Pressure.isBackPressured;
@@ -120,6 +121,8 @@ class Framer implements Agent, EngineEndPointHandler, ProtocolHandler
         "Releasing session %s with connectionId %s from library %s");
     private final CharFormatter connectingFormatter = new CharFormatter(
         "Connecting to %s:%s from library %s");
+    private final CharFormatter disconnectSessionFormatter = new CharFormatter(
+        "Disconnect session %s from library %s with reason %s");
 
     private final RetryManager retryManager = new RetryManager();
     private final List<ResetSequenceNumberCommand> replies = new ArrayList<>();
@@ -1792,6 +1795,9 @@ class Framer implements Agent, EngineEndPointHandler, ProtocolHandler
 
     public Action onDisconnect(final int libraryId, final long connectionId, final DisconnectReason reason)
     {
+        DebugLogger.log(FIXP_SESSION,
+            disconnectSessionFormatter, connectionId, libraryId, reason != null ? reason.name() : "");
+
         receiverEndPoints.removeConnection(connectionId, reason);
         fixSenderEndPoints.removeConnection(connectionId);
         fixPSenderEndPoints.removeConnection(connectionId);

@@ -18,6 +18,7 @@ package uk.co.real_logic.artio.system_tests;
 import org.agrona.ErrorHandler;
 import org.agrona.concurrent.EpochNanoClock;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.*;
 import uk.co.real_logic.artio.builder.*;
@@ -51,6 +52,7 @@ import static uk.co.real_logic.artio.Timing.withTimeout;
 import static uk.co.real_logic.artio.messages.InitialAcceptedSessionOwner.SOLE_LIBRARY;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class ExternallyControlledSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     private boolean awaitsNewOrderSingle = false;

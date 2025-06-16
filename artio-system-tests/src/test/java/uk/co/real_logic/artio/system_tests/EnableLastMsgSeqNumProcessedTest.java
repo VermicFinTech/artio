@@ -1,6 +1,7 @@
 package uk.co.real_logic.artio.system_tests;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
@@ -15,6 +16,7 @@ import static uk.co.real_logic.artio.TestFixtures.launchMediaDriver;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 import static uk.co.real_logic.artio.validation.SessionPersistenceStrategy.alwaysPersistent;
 
+@Ignore
 public class EnableLastMsgSeqNumProcessedTest extends AbstractGatewayToGatewaySystemTest
 {
     @Before

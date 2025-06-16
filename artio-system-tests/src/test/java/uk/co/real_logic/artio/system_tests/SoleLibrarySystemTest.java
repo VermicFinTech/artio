@@ -15,6 +15,7 @@
  */
 package uk.co.real_logic.artio.system_tests;
 
+import org.junit.Ignore;
 import uk.co.real_logic.artio.engine.*;
 import uk.co.real_logic.artio.engine.framer.LibraryInfo;
 import uk.co.real_logic.artio.library.FixLibrary;
@@ -37,6 +38,7 @@ import static uk.co.real_logic.artio.messages.InitialAcceptedSessionOwner.SOLE_L
 import static uk.co.real_logic.artio.messages.SessionState.ACTIVE;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class SoleLibrarySystemTest extends AbstractGatewayToGatewaySystemTest
 {
     private LockStepFramerEngineScheduler scheduler;

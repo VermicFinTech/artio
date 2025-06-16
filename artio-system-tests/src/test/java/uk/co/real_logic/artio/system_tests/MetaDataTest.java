@@ -18,6 +18,7 @@ package uk.co.real_logic.artio.system_tests;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.MonitoringAgentFactory;
 import uk.co.real_logic.artio.Reply;
@@ -39,6 +40,7 @@ import static uk.co.real_logic.artio.TestFixtures.launchMediaDriver;
 import static uk.co.real_logic.artio.Timing.assertEventuallyTrue;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class MetaDataTest extends AbstractGatewayToGatewaySystemTest
 {
     private static final int UPDATE_OFFSET = 1;

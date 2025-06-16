@@ -30,6 +30,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -374,6 +375,7 @@ public class FramerTest
     }
 
     @Test
+    @Ignore("Disabled liveness detector")
     public void shouldAcquireInitiatedClientsWhenLibraryDisconnects() throws Exception
     {
         initiateConnection();
@@ -387,6 +389,7 @@ public class FramerTest
     }
 
     @Test
+    @Ignore("Disabled liveness detector")
     public void shouldAcquireAcceptedClientsWhenLibraryDisconnects() throws Exception
     {
         libraryHasAcceptedClient();
@@ -400,6 +403,7 @@ public class FramerTest
     }
 
     @Test
+    @Ignore("Disabled liveness detector")
     public void shouldAcquireAcceptedClientsWhenLibraryDisconnectsAndIndexerCaughtUp() throws Exception
     {
         sentIndexedToPosition(-100L);

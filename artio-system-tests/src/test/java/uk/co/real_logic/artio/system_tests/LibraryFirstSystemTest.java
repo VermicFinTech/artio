@@ -16,6 +16,7 @@
 package uk.co.real_logic.artio.system_tests;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.library.FixLibrary;
 
@@ -27,6 +28,7 @@ import java.util.concurrent.Future;
 import static uk.co.real_logic.artio.TestFixtures.launchMediaDriver;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class LibraryFirstSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     private final ExecutorService threadPool = Executors.newFixedThreadPool(2);

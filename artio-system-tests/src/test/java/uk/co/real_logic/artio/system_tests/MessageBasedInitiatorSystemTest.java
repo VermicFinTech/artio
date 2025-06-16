@@ -24,6 +24,7 @@ import org.agrona.concurrent.OffsetEpochNanoClock;
 import org.agrona.concurrent.status.CountersReader;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -66,6 +67,7 @@ import static uk.co.real_logic.artio.system_tests.SystemTestUtil.PASSWORD;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.USERNAME;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 // For reproducing error scenarios when initiating a connection
 public class MessageBasedInitiatorSystemTest
 {

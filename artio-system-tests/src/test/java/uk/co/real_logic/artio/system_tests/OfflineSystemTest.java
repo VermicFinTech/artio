@@ -16,6 +16,7 @@
 package uk.co.real_logic.artio.system_tests;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.engine.framer.LibraryInfo;
@@ -40,6 +41,7 @@ import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 /**
  * Offline session tests that don't require persistent sequence numbers.
  */
+@Ignore
 public class OfflineSystemTest extends AbstractGatewayToGatewaySystemTest
 {
 

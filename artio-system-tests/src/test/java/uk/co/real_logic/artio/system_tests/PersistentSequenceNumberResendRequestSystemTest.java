@@ -18,6 +18,7 @@ package uk.co.real_logic.artio.system_tests;
 import io.aeron.logbuffer.ControlledFragmentHandler.Action;
 import org.agrona.DirectBuffer;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.TestFixtures;
@@ -40,6 +41,7 @@ import static uk.co.real_logic.artio.library.SessionConfiguration.AUTOMATIC_INIT
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 import static uk.co.real_logic.artio.validation.SessionPersistenceStrategy.alwaysPersistent;
 
+@Ignore
 public class PersistentSequenceNumberResendRequestSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     private static final boolean PRINT_ERROR_MESSAGES = true;

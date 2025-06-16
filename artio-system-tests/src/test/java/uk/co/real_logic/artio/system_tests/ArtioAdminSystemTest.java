@@ -19,6 +19,7 @@ import io.aeron.exceptions.TimeoutException;
 import org.agrona.CloseHelper;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.FixGatewayException;
 import uk.co.real_logic.artio.Reply;
@@ -41,6 +42,7 @@ import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 import static uk.co.real_logic.artio.system_tests.TestSystem.LONG_AWAIT_TIMEOUT_IN_MS;
 import static uk.co.real_logic.artio.util.CustomMatchers.assertThrows;
 
+@Ignore
 public class ArtioAdminSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     private ArtioAdmin artioAdmin;

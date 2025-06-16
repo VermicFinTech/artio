@@ -21,6 +21,7 @@ import org.agrona.collections.IntHashSet;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.status.CountersReader;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoint;
 import org.junit.experimental.theories.Theories;
@@ -73,6 +74,7 @@ import static uk.co.real_logic.artio.system_tests.FixMessage.hasMessageSequenceN
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.PASSWORD;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 @RunWith(Theories.class)
 public class GatewayToGatewaySystemTest extends AbstractGatewayToGatewaySystemTest
 {

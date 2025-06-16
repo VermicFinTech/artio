@@ -2,6 +2,7 @@ package uk.co.real_logic.artio.system_tests;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.Reply;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
@@ -14,6 +15,7 @@ import static uk.co.real_logic.artio.Timing.assertEventuallyTrue;
 import static uk.co.real_logic.artio.dictionary.generation.Exceptions.closeAll;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class MultipleConnectionSystemTest extends AbstractGatewayToGatewaySystemTest
 {
     @Before

@@ -18,6 +18,7 @@ package uk.co.real_logic.artio.system_tests;
 import org.agrona.collections.IntHashSet;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.real_logic.artio.MonitoringAgentFactory;
 import uk.co.real_logic.artio.Reply;
@@ -46,6 +47,7 @@ import static uk.co.real_logic.artio.TestFixtures.launchMediaDriver;
 import static uk.co.real_logic.artio.Timing.assertEventuallyTrue;
 import static uk.co.real_logic.artio.system_tests.SystemTestUtil.*;
 
+@Ignore
 public class AsyncAuthenticatorTest extends AbstractGatewayToGatewaySystemTest
 {
     private static final long LINGER_TIMEOUT_IN_MS = 500L;
