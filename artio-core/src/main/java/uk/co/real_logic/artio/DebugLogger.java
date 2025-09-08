@@ -1398,10 +1398,19 @@ public final class DebugLogger
 
         public void logSbeDecoder(final LogTag tag, final String prefix, final Consumer<StringBuilder> appendTo)
         {
-            appendStart();
-            builder.append(prefix);
-            appendTo.accept(builder);
-            finish(tag);
+            try {
+                appendStart();
+                builder.append(prefix);
+                appendTo.accept(builder);
+                finish(tag);
+            }
+            catch (final Throwable e)
+            {
+                appendStart();
+                builder.append(prefix);
+                builder.append("EXCEPTION: ").append(e);
+                finish(tag);
+            }
         }
 
         private void appendStart()

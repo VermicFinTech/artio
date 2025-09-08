@@ -270,7 +270,7 @@ abstract class GatewaySessions
         protected volatile AuthenticationState state = AuthenticationState.PENDING;
 
         protected GatewaySession session;
-        protected DisconnectReason reason;
+        protected DisconnectReason reason = DisconnectReason.NULL_VAL;
         protected long requiredPosition = NO_REQUIRED_POSITION;
         protected long lingerTimeoutInMs;
         protected long lingerExpiryTimeInMs;
