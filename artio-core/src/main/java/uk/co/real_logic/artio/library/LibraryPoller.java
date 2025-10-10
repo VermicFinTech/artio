@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import io.aeron.ChannelUri;
 import io.aeron.CommonContext;
 import io.aeron.ControlledFragmentAssembler;
 import io.aeron.Subscription;
+import io.aeron.driver.DutyCycleTracker;
 import io.aeron.exceptions.RegistrationException;
 import io.aeron.logbuffer.ControlledFragmentHandler;
 import io.aeron.logbuffer.ControlledFragmentHandler.Action;
@@ -199,6 +200,7 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
     private final boolean enginesAreClustered;
     private final ErrorHandler errorHandler;
     private final FixCounters fixCounters;
+    private final DutyCycleTracker dutyCycleTracker;
 
     private final boolean isReproductionEnabled;
     private final ReproductionClock reproductionClock;
@@ -314,6 +316,9 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
             epochClock, configuration.epochNanoClock(), configuration.sessionEpochFractionFormat());
         this.isReproductionEnabled = configuration.isReproductionEnabled();
         this.reproductionClock = isReproductionEnabled ? configuration.reproductionConfiguration().clock() : null;
+
+        this.dutyCycleTracker = fixCounters.getLibraryDutyCycleTracker(
+            configuration.libraryId(), configuration.libraryCycleThresholdNs());
     }
 
     boolean isConnected()
@@ -664,29 +669,32 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
 
     int poll(final int fragmentLimit)
     {
+        final long timeInNs = epochNanoClock.nanoTime();
         final long timeInMs = timeInMs();
+
+        dutyCycleTracker.measureAndUpdate(timeInNs);
 
         switch (state)
         {
             case CONNECTED:
-                return pollWithoutReconnect(timeInMs, fragmentLimit);
+                return pollWithoutReconnect(timeInNs, timeInMs, fragmentLimit);
 
             case ATTEMPT_CONNECT:
-                startConnecting();
-                return pollWithoutReconnect(timeInMs, fragmentLimit);
+                startConnecting(timeInMs);
+                return pollWithoutReconnect(timeInNs, timeInMs, fragmentLimit);
 
             case CONNECTING:
                 nextConnectingStep(timeInMs);
-                return pollWithoutReconnect(timeInMs, fragmentLimit);
+                return pollWithoutReconnect(timeInNs, timeInMs, fragmentLimit);
 
             case ATTEMPT_CURRENT_NODE:
                 connectToNewEngine(timeInMs);
                 state = CONNECTING;
-                return pollWithoutReconnect(timeInMs, fragmentLimit);
+                return pollWithoutReconnect(timeInNs, timeInMs, fragmentLimit);
 
             case ENGINE_DISCONNECT:
                 attemptEngineCloseBasedLogout();
-                return pollWithoutReconnect(timeInMs, fragmentLimit);
+                return pollWithoutReconnect(timeInNs, timeInMs, fragmentLimit);
 
             case CLOSED:
             default:
@@ -694,9 +702,8 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
         }
     }
 
-    private int pollWithoutReconnect(final long timeInMs, final int fragmentLimit)
+    private int pollWithoutReconnect(final long timeInNs, final long timeInMs, final int fragmentLimit)
     {
-        final long timeInNs = epochNanoClock.nanoTime();
         int operations = 0;
         operations += inboundSubscription.controlledPoll(outboundSubscription, fragmentLimit);
         operations += livenessDetector.poll(timeInMs);
@@ -709,6 +716,11 @@ final class LibraryPoller implements LibraryEndPointHandler, ProtocolHandler, Au
     // -----------------------------------------------------------------------
     //                     BEGIN CONNECTION LOGIC
     // -----------------------------------------------------------------------
+
+    void onStart()
+    {
+        dutyCycleTracker.update(epochNanoClock.nanoTime());
+    }
 
     void startConnecting()
     {

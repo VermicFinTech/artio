@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,6 +217,11 @@ public final class Entry
         default boolean isEnumField()
         {
             return this instanceof Field && ((Field)this).isEnum();
+        }
+
+        default boolean isCharOrBooleanBasedField()
+        {
+            return this instanceof Field && ((Field)this).isCharOrBooleanBasedField();
         }
 
         String name();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ public final class SoleEngine
             .libraryAeronChannel(AERON_CHANNEL)
             .errorIfDuplicateEngineDetected(false);
 
-        configuration.slowConsumerTimeoutInMs(1000);
         configuration.replyTimeoutInMs(1000);
 
         System.out.println("Server Logs at " + configuration.logFileDir());

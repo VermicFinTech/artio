@@ -36,6 +36,7 @@ import uk.co.real_logic.artio.messages.FixPMessageDecoder;
 import uk.co.real_logic.artio.messages.FixPMessageEncoder;
 import uk.co.real_logic.artio.messages.MessageHeaderEncoder;
 
+import static uk.co.real_logic.artio.LogTag.REPLAY;
 import static uk.co.real_logic.artio.LogTag.REPLAY_ATTEMPT;
 import static uk.co.real_logic.artio.fixp.AbstractFixPParser.FIXP_MESSAGE_HEADER_LENGTH;
 
@@ -99,9 +100,16 @@ public class FixPReplayerSession extends ReplayerSession
         state = State.REPLAYING;
     }
 
-    MessageTracker messageTracker()
+    void query()
     {
-        return new FixPMessageTracker(this, binaryParser, (endSeqNo - beginSeqNo) + 1, sessionId);
+        replayOperation = replayQuery.query(
+            sessionId,
+            beginSeqNo,
+            sequenceIndex,
+            endSeqNo,
+            sequenceIndex,
+            REPLAY,
+            new FixPMessageTracker(this, binaryParser, (endSeqNo - beginSeqNo) + 1, sessionId));
     }
 
     public boolean attemptReplay()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public abstract class AbstractDecoderGeneratorTest
             MESSAGE_EXAMPLE, 1, TEST_PACKAGE, TEST_PARENT_PACKAGE, TEST_PACKAGE,
             outputManager, validationClass, rejectUnknownField,
             rejectUnknownEnumValue, flyweightStringsEnabled, wrapEmptyBuffer,
-            String.valueOf(rejectingUnknownEnumValue), true);
+            String.valueOf(rejectingUnknownEnumValue), true, null);
         final EncoderGenerator encoderGenerator = new EncoderGenerator(MESSAGE_EXAMPLE, TEST_PACKAGE,
             TEST_PARENT_PACKAGE, outputManager, ValidationOn.class, RejectUnknownFieldOn.class,
             RejectUnknownEnumValueOn.class, RUNTIME_REJECT_UNKNOWN_ENUM_VALUE_PROPERTY, true);
@@ -1179,10 +1179,14 @@ public abstract class AbstractDecoderGeneratorTest
         assertEquals(2, getNoEgGroupGroupCounter(decoder));
 
         group = getEgGroup(decoder);
-        assertNull(getNestedGroup(group));
+
+        // Although the message does not have nestedEg tags, the decoders will remain
+        // This is to ensure allocation is done only when it's necessary to add new elements to a repeating group
+        // for more details see issue https://github.com/artiofix/artio/issues/532
+        //assertNotNull(getNestedGroup(group));
 
         group = next(group);
-        assertNull(getNestedGroup(group));
+        //assertNotNull(getNestedGroup(group));
     }
 
     @Test
@@ -1399,6 +1403,74 @@ public abstract class AbstractDecoderGeneratorTest
         assertArrayEquals(MULTI_CHAR_VALUE, getMultiCharField(decoder));
 
         assertValid(decoder);
+    }
+
+    @Test
+    public void decodesInvalidSizeBooleanValueWithNoValidation() throws Exception
+    {
+        final Decoder decoder = decodeHeartbeatWithoutValidation(INCORRECT_BOOLEAN_VALUE_MESSAGE);
+        assertEquals(true, getBooleanField(decoder));
+        assertEquals(2, getInt(decoder, "booleanFieldLength"));
+
+        assertValid(decoder);
+    }
+
+    @Test
+    public void shouldNotRetainInvalidBooleanCharValueSizeAfterNewMessageParsed() throws Exception
+    {
+        final Decoder decoder = decodeHeartbeat(INCORRECT_BOOLEAN_VALUE_MESSAGE);
+        assertEquals(true, getBooleanField(decoder));
+        assertEquals(2, getInt(decoder, "booleanFieldLength"));
+
+        assertInvalid(decoder, 5, 118);
+
+        decoder.reset();
+
+        decode(ENCODED_MESSAGE, decoder);
+        assertEquals(true, getBooleanField(decoder));
+        assertEquals(1, getInt(decoder, "booleanFieldLength"));
+        assertValid(decoder);
+
+    }
+
+    @Test
+    public void decodesInvalidSizeBooleanValue() throws Exception
+    {
+        final Decoder decoder = decodeHeartbeat(INCORRECT_BOOLEAN_VALUE_MESSAGE);
+        assertEquals(true, getBooleanField(decoder));
+        assertEquals(2, getInt(decoder, "booleanFieldLength"));
+
+        assertInvalid(decoder, 5, 118);
+    }
+
+    @Test
+    public void decodesInvalidSizeNoEnumCharValue() throws Exception
+    {
+        final Decoder decoder = decodeHeartbeat(INCORRECT_SIZE_NO_ENUM_CHAR_VALUE_MESSAGE);
+        assertEquals('a', getChar(decoder, "charNoEnumField"));
+        assertEquals(2, getInt(decoder, "charNoEnumFieldLength"));
+
+        assertInvalid(decoder, 5, 144);
+    }
+
+    @Test
+    public void decodesInvalidSizeCharValue() throws Exception
+    {
+        final Decoder decoder = decodeHeartbeat(INCORRECT_SIZE_CHAR_VALUE_MESSAGE);
+        assertEquals('a', getCharField(decoder));
+        assertEquals(2, getInt(decoder, "charFieldLength"));
+
+        assertInvalid(decoder, 5, 128);
+    }
+
+    @Test
+    public void decodesInvalidCharValue() throws Exception
+    {
+        final Decoder decoder = decodeHeartbeat(INCORRECT_SIZE_2_CHAR_VALUE_MESSAGE);
+        assertEquals('z', getCharField(decoder));
+        assertEquals(1, getInt(decoder, "charFieldLength"));
+
+        assertInvalid(decoder, 5, 128);
     }
 
     @Test
@@ -1681,6 +1753,11 @@ public abstract class AbstractDecoderGeneratorTest
     private char[] getMultiCharField(final Decoder decoder) throws Exception
     {
         return getChars(decoder, "multiCharField");
+    }
+
+    private char getCharField(final Decoder decoder) throws Exception
+    {
+        return getChar(decoder, "charField");
     }
 
     private char[] getMultiCharNoEnumField(final Decoder decoder) throws Exception

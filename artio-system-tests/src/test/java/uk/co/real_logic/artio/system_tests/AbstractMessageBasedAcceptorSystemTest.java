@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,6 @@ public class AbstractMessageBasedAcceptorSystemTest
             .logFileDir(ACCEPTOR_LOGS)
             .initialAcceptedSessionOwner(initialAcceptedSessionOwner)
             .noLogonDisconnectTimeoutInMs(500)
-            .slowConsumerTimeoutInMs(TEST_REPLY_TIMEOUT_IN_MS)
             .replyTimeoutInMs(TEST_REPLY_TIMEOUT_IN_MS)
             .reasonableTransmissionTimeInMs(reasonableTransmissionTimeInMs)
             .sessionPersistenceStrategy(logon ->

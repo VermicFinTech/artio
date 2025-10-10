@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,17 +51,14 @@ public class ReplayOperation
         ", length=%s" +
         ", count=%s" +
         "}"));
-    private static final ThreadLocal<CharFormatter> START_REPLAY_FORMATTER =
-        ThreadLocal.withInitial(() -> new CharFormatter("ReplayOperation : Start Replay: " +
-        "replaySessionId=%s" +
-        ", count=%s"));
-    private static final ThreadLocal<CharFormatter> POLLING_REPLAY_FORMATTER =
-        ThreadLocal.withInitial(() -> new CharFormatter("Polling Replay Image pos=%s"));
-    private static final ThreadLocal<CharFormatter> FINISHED_FORMATTER =
-        ThreadLocal.withInitial(() -> new CharFormatter("Finished with Image @ pos=%s, closed=%s, eos=%s"));
-    private static final ThreadLocal<CharFormatter> MESSAGE_REPLAY_COUNT_FORMATTER =
-        ThreadLocal.withInitial(() -> new CharFormatter(
-        "Finished with messageTrackerCount=%s, recordingRangeCount=%s"));
+    private static final ThreadLocal<CharFormatter> START_REPLAY_FORMATTER = ThreadLocal.withInitial(
+        () -> new CharFormatter("ReplayOperation : Start Replay: replaySessionId=%s, count=%s"));
+    private static final ThreadLocal<CharFormatter> POLLING_REPLAY_FORMATTER = ThreadLocal.withInitial(
+        () -> new CharFormatter("Polling Replay Image pos=%s"));
+    private static final ThreadLocal<CharFormatter> FINISHED_FORMATTER = ThreadLocal.withInitial(
+        () -> new CharFormatter("Finished with Image @ pos=%s, closed=%s, eos=%s"));
+    private static final ThreadLocal<CharFormatter> MESSAGE_REPLAY_COUNT_FORMATTER = ThreadLocal.withInitial(
+        () -> new CharFormatter("Finished with messageTrackerCount=%s, recordingRangeCount=%s"));
 
     // Closing state formatters:
     private static final ThreadLocal<CharFormatter> INIT_CLOSING_FORMATTER = ThreadLocal.withInitial(

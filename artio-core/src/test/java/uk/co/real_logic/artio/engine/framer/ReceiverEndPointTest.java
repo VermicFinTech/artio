@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -522,6 +522,22 @@ class ReceiverEndPointTest
         pollWithNoData(LOGON_LEN);
 
         savesFramedMessages(1, OK, LOGON_LEN, LogonDecoder.MESSAGE_TYPE);
+    }
+
+    @Test
+    void invalidTagExceptionInvalidatesMessage()
+    {
+        endpointBufferUpdatedWith(
+            (buffer) ->
+            {
+                buffer.put((byte)0x00).put(EG_MESSAGE);
+                return 1 + MSG_LEN;
+            });
+
+        assertEquals(1 + MSG_LEN, endPoint.poll());
+
+        pollWithNoData(0);
+        savesInvalidMessage(1 + MSG_LEN, times(1), INVALID, TIMESTAMP);
     }
 
     private void firstSaveAttemptIsBackPressured()

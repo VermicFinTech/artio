@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package uk.co.real_logic.artio.engine.framer;
 
 import io.aeron.Image;
 import io.aeron.Subscription;
+import io.aeron.driver.DutyCycleTracker;
 import io.aeron.logbuffer.ControlledFragmentHandler.Action;
 import io.aeron.logbuffer.Header;
 import org.agrona.DirectBuffer;
@@ -113,6 +114,7 @@ public class FramerTest
     private final SequenceNumberIndexReader sentSequenceNumberIndex = mock(SequenceNumberIndexReader.class);
     private final SequenceNumberIndexReader receivedSequenceNumberIndex = mock(SequenceNumberIndexReader.class);
     private final ReplayQuery replayQuery = mock(ReplayQuery.class);
+    private final FixCounters fixCounters = mock(FixCounters.class);
     private final FixContexts fixContexts = mock(FixContexts.class);
     private final FixGatewaySessions gatewaySessions = mock(FixGatewaySessions.class);
     private final FixGatewaySession gatewaySession = mock(FixGatewaySession.class);
@@ -132,7 +134,6 @@ public class FramerTest
 
     private final EngineConfiguration engineConfiguration = new EngineConfiguration()
         .bindTo(FRAMER_ADDRESS.getHostName(), FRAMER_ADDRESS.getPort())
-        .slowConsumerTimeoutInMs(REPLY_TIMEOUT_IN_MS)
         .replyTimeoutInMs(REPLY_TIMEOUT_IN_MS)
         .libraryAeronChannel(IPC_CHANNEL)
         .conclude();
@@ -156,6 +157,9 @@ public class FramerTest
         server.configureBlocking(false);
 
         clientBuffer.putInt(10, 5);
+
+        when(fixCounters.getFramerDutyCycleTracker(anyLong())).thenReturn(mock(DutyCycleTracker.class));
+        when(fixCounters.getIndexerDutyCycleTracker(anyLong())).thenReturn(mock(DutyCycleTracker.class));
 
         when(outboundLibrarySubscription.imageBySessionId(anyInt())).thenReturn(normalImage);
 
@@ -210,7 +214,7 @@ public class FramerTest
             mock(CountersReader.class),
             2,
             1,
-            mock(FixCounters.class),
+            fixCounters,
             mock(SenderSequenceNumbers.class),
             mock(AgentInvoker.class),
             null);
@@ -528,7 +532,7 @@ public class FramerTest
     {
         initiateConnection();
 
-        when(inboundPublication.saveReleaseSessionReply(OK, CORR_ID))
+        when(inboundPublication.saveReleaseSessionReply(LIBRARY_ID, OK, CORR_ID))
             .thenReturn(BACK_PRESSURED, POSITION);
 
         releaseConnection(ABORT);

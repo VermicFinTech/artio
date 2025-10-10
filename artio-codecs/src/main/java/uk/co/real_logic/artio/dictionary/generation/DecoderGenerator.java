@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,10 +133,21 @@ class DecoderGenerator extends Generator
         final boolean flyweightsEnabled,
         final boolean wrapEmptyBuffer,
         final String codecRejectUnknownEnumValueEnabled,
-        final boolean fixTagsInJavadoc)
+        final boolean fixTagsInJavadoc,
+        final String decimalFloatOverflowHandler)
     {
-        super(dictionary, thisPackage, commonPackage, outputManager, validationClass, rejectUnknownFieldClass,
-            rejectUnknownEnumValueClass, flyweightsEnabled, codecRejectUnknownEnumValueEnabled, fixTagsInJavadoc);
+        super(
+            dictionary,
+            thisPackage,
+            commonPackage,
+            outputManager,
+            validationClass,
+            rejectUnknownFieldClass,
+            rejectUnknownEnumValueClass,
+            flyweightsEnabled,
+            codecRejectUnknownEnumValueEnabled,
+            fixTagsInJavadoc,
+            decimalFloatOverflowHandler);
         this.initialBufferSize = initialBufferSize;
         this.encoderPackage = encoderPackage;
         this.wrapEmptyBuffer = wrapEmptyBuffer;
@@ -255,6 +266,13 @@ class DecoderGenerator extends Generator
         }
 
         out.append(classDeclaration(className, interfaces, false, aggregate.isInParent(), isGroup));
+        if (decimalFloatOverflowHandler != null && type != HEADER && type != GROUP)
+        {
+            out.append(String.format("    public %s() {\n\n", className));
+            out.append(String.format("        decimalFloatOverflowHandler = new %s",
+                decimalFloatOverflowHandler + "();\n\n"));
+            out.append("    }\n\n");
+        }
         generateValidation(out, aggregate, type);
         if (isMessage)
         {
@@ -534,6 +552,12 @@ class DecoderGenerator extends Generator
             .map(this::generateEnumValidation)
             .collect(joining("\n"));
 
+        final String charSizeValidation = aggregate
+            .allFieldsIncludingComponents()
+            .filter((entry) -> entry.element().isCharOrBooleanBasedField())
+            .map(this::generateCharSizeValidation)
+            .collect(joining("\n"));
+
         //maybe this should look at groups on components too?
         final String groupValidation = aggregate
             .allGroupsIncludingComponents()
@@ -566,7 +590,7 @@ class DecoderGenerator extends Generator
 
         out.append(String.format(
             (isGroup ? generateAllGroupFields(aggregate) :
-            "    private final IntHashSet alreadyVisitedFields = new IntHashSet(%5$d);\n\n" +
+            "    private final IntHashSet alreadyVisitedFields = new IntHashSet(%6$d);\n\n" +
             "    private final IntHashSet unknownFields = new IntHashSet(10);\n\n") +
             "    private final IntHashSet missingRequiredFields = new IntHashSet(%1$d);\n\n" +
             "    public boolean validate()\n" +
@@ -587,11 +611,13 @@ class DecoderGenerator extends Generator
             "        }\n" +
             "%3$s" +
             "%4$s" +
+            "%5$s" +
             "        return true;\n" +
             "    }\n\n",
             sizeHashSet(requiredFields),
             messageValidation,
             enumValidation,
+            charSizeValidation,
             groupValidation,
             2 * aggregate.allFieldsIncludingComponents().count()));
     }
@@ -645,6 +671,33 @@ class DecoderGenerator extends Generator
             prefix,
             name,
             constantName(field.name()));
+    }
+
+    private CharSequence generateCharSizeValidation(final Entry entry)
+    {
+        final Field field = (Field)entry.element();
+        if (!field.isCharOrBooleanBasedField())
+        {
+            return "";
+        }
+
+        final String name = entry.name();
+        final int tagNumber = field.number();
+        final Type type = field.type();
+        final String propertyName = formatPropertyName(name);
+
+        final String charsValidation = addCharSizeValidation(type, propertyName, tagNumber);
+
+        return
+          entry.required() ? charsValidation :
+            String.format(
+              "        if (has%1$s)\n" +
+                "        {\n" +
+                "%2$s" +
+                "        }\n",
+              entry.name(),
+              charsValidation
+            );
     }
 
     private CharSequence generateEnumValidation(final Entry entry)
@@ -716,6 +769,30 @@ class DecoderGenerator extends Generator
                 entry.name(),
                 enumValidationMethod
             );
+    }
+
+    private static String addCharSizeValidation(
+        final Type type,
+        final String propertyName,
+        final int tagNumber)
+    {
+        String charsValidation = "";
+        if (type.isCharOrBooleanBased())
+        {
+
+            charsValidation = String.format(
+                "        if (%3$s && %1$sLength > 1)\n" +
+                "        {\n" +
+                "            invalidTagId = %2$s;\n" +
+                "            rejectReason = " + VALUE_IS_INCORRECT + ";\n" +
+                "            return false;\n" +
+                "        }\n",
+              propertyName,
+              tagNumber,
+              CODEC_VALIDATION_ENABLED);
+
+        }
+        return charsValidation;
     }
 
     private CharSequence generateGroupValidation(final Entry entry)
@@ -991,13 +1068,23 @@ class DecoderGenerator extends Generator
         out.append(String.format(
             "    private final TrailerDecoder trailer;\n" +
             "    private final IntHashSet %1$s;\n" +
-            "    public %2$s(final TrailerDecoder trailer, final IntHashSet %1$s)\n" +
-            "    {\n" +
-            "        this.trailer = trailer;\n" +
-            "        this.%1$s = %1$s;\n" +
-            "    }\n\n",
+            "    public %2$s(final TrailerDecoder trailer, final IntHashSet %1$s)\n",
             MESSAGE_FIELDS,
             decoderClassName(aggregate)));
+
+        out.append(String.format(
+            "    {\n" +
+            "        this.trailer = trailer;\n" +
+            "        this.%1$s = %1$s;\n",
+            MESSAGE_FIELDS));
+
+        if (decimalFloatOverflowHandler != null)
+        {
+            out.append(String.format("        decimalFloatOverflowHandler = new %s",
+                decimalFloatOverflowHandler + "();\n\n"));
+        }
+
+        out.append("    }\n\n");
     }
 
     private void wrapTrailerInConstructor(final Writer out, final Aggregate aggregate) throws IOException
@@ -1382,6 +1469,11 @@ class DecoderGenerator extends Generator
 
         return String.format(
             "    %10$s %1$s %2$s%3$s;\n\n" +
+              (type.isCharOrBooleanBased() ? "    %10$s int %2$sLength = 0;\n" +
+                "    public int %2$sLength()" +
+                "    {\n" +
+                "       return %2$sLength;\n" +
+                "    }\n" : "") +
             "%4$s" +
             "    %11$spublic %1$s %2$s()\n" +
             "    {\n" +
@@ -1743,6 +1835,7 @@ class DecoderGenerator extends Generator
             "        this.buffer = buffer;\n" +
             "        final int end = offset + length;\n" +
             "        int position = offset;\n" +
+            "        int positionIter = position;\n" +
             (hasCommonCompounds ? "        position += header.decode(buffer, position, length);\n" : "") +
             (isGroup ? "        seenFields.clear();\n" : "") +
             "        int tag;\n\n" +
@@ -1921,7 +2014,17 @@ class DecoderGenerator extends Generator
             "                {\n" +
             "                    if (%1$sCurrent != null)\n" +
             "                    {\n" +
-            "                        position += %1$sCurrent.decode(buffer, position, end - position);\n" +
+            "                        positionIter = %1$sCurrent.decode(buffer, position, end - position);\n" +
+            "                        if (positionIter == 0 && " + CODEC_VALIDATION_ENABLED + ")\n" +
+            "                        {\n" +
+            "                                invalidTagId = tag;\n" +
+            "                                rejectReason = " + INCORRECT_NUMINGROUP_COUNT_FOR_REPEATING_GROUP + ";\n" +
+            "                                break;\n" +
+            "                        }\n" +
+            "                        else\n" +
+            "                        {\n" +
+            "                                position += positionIter;\n" +
+            "                        }\n" +
             "                        %1$sCurrent = %1$sCurrent.next();\n" +
             "                    }\n" +
             "                }\n" +
@@ -1974,10 +2077,12 @@ class DecoderGenerator extends Generator
             "%s" +
             "%s" +
             "%s" +
+            "%s" +
             "                break;\n",
             constantName(name),
             optionalAssign(entry),
             fieldDecodeMethod(field, fieldName),
+            getCharOrBooleanLength(field, fieldName),
             storeOffsetForVariableLengthFields(field.type(), fieldName),
             storeLengthForVariableLengthFields(field.type(), fieldName),
             suffix);
@@ -2040,7 +2145,8 @@ class DecoderGenerator extends Generator
                     return "";
                 }
                 decodeMethod = String.format(
-                    "getFloat(buffer, %s, valueOffset, valueLength, %d, " + CODEC_VALIDATION_ENABLED + ")",
+                    "getFloat(buffer, %s, valueOffset, valueLength, %d, " + CODEC_VALIDATION_ENABLED +
+                      ", decimalFloatOverflowHandler)",
                     fieldName, field.number());
                 break;
             case CHAR:
@@ -2096,6 +2202,16 @@ class DecoderGenerator extends Generator
                 throw new UnsupportedOperationException("Unknown type: " + field.type() + " in " + fieldName);
         }
         return prefix + decodeMethod + ";\n";
+    }
+
+    private String getCharOrBooleanLength(final Field field, final String fieldName)
+    {
+        if (!field.type().isCharOrBooleanBased())
+        {
+            return "";
+        }
+
+        return String.format("                %1$sLength = valueLength;\n", fieldName);
     }
 
     protected String stringAppendTo(final String fieldName)

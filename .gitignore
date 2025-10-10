@@ -25,9 +25,11 @@ out
 
 # the build
 build-local.properties
-.gradle
-build
-bin
+build/
+bin/
+!buildSrc/
+!buildSrc/src/**/build
+.gradle/
 
 # Benchmark timings
 timings.log

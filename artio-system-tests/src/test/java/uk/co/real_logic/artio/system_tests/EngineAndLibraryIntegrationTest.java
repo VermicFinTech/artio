@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,6 @@ public class EngineAndLibraryIntegrationTest
     {
         final EngineConfiguration config = acceptingConfig(port, ACCEPTOR_ID, INITIATOR_ID, nanoClock);
         config.deleteLogFileDirOnStart(true);
-        config.slowConsumerTimeoutInMs(replyTimeoutInMs);
         config.replyTimeoutInMs(replyTimeoutInMs);
         engine = FixEngine.launch(config);
     }

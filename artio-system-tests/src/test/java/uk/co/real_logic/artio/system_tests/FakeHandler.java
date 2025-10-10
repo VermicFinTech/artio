@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,7 @@ public class FakeHandler
         parser.onMessage(buffer, offset, length);
         final FixMessage parsedMessage = acceptor.lastReceivedMessage();
         parsedMessage.sequenceIndex(sequenceIndex);
+        parsedMessage.messageType(messageType);
         parsedMessage.status(messageInfo.status());
         parsedMessage.isValid(messageInfo.isValid());
         acceptor.forSession(session);
@@ -253,8 +254,7 @@ public class FakeHandler
             library.requestSession(sessionId, NO_MESSAGE_REPLAY, NO_MESSAGE_REPLAY, 10_000);
         }
 
-        sessionExistsInfos.add(
-            new SessionExistsInfo(
+        sessionExistsInfos.add(new SessionExistsInfo(
             localCompId, remoteCompId, sessionId, logonReceivedSequenceNumber, logonSequenceIndex));
     }
 

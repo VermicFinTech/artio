@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -355,6 +355,22 @@ public final class ExampleDictionary
         "8=FIX.4.4\0019=61\00135=0\001115=abc\001116=2\001117=1.1" +
         "\001132=a b\001127=19700101-00:00:00.001\00110=225\001";
 
+    public static final String INCORRECT_BOOLEAN_VALUE_MESSAGE =
+        "8=FIX.4.4\0019=61\00135=0\001115=abc\001116=2\001117=1.1" +
+        "\001118=YY\001127=19700101-00:00:00.001\00110=225\001";
+
+    public static final String INCORRECT_SIZE_NO_ENUM_CHAR_VALUE_MESSAGE =
+        "8=FIX.4.4\0019=61\00135=0\001115=abc\001116=2\001117=1.1" +
+        "\001144=ab\001127=19700101-00:00:00.001\00110=225\001";
+
+    public static final String INCORRECT_SIZE_CHAR_VALUE_MESSAGE =
+        "8=FIX.4.4\0019=61\00135=0\001115=abc\001116=2\001117=1.1" +
+        "\001128=ab\001127=19700101-00:00:00.001\00110=225\001";
+
+    public static final String INCORRECT_SIZE_2_CHAR_VALUE_MESSAGE =
+        "8=FIX.4.4\0019=61\00135=0\001115=abc\001116=2\001117=1.1" +
+        "\001128=z\001127=19700101-00:00:00.001\00110=225\001";
+
     public static final String MULTI_CHAR_VALUE_NO_ENUM_MESSAGE =
         "8=FIX.4.4\0019=65\00135=0\001115=abc\001116=2\001117=1.1" +
         "\001134=a b z f\001127=19700101-00:00:00.001\00110=007\001";
@@ -553,6 +569,7 @@ public final class ExampleDictionary
         final Field booleanField = registerField(messageEgFields, 118, "BooleanField", Type.BOOLEAN);
         final Field dataField = registerField(messageEgFields, 119, "DataField", Type.DATA);
         final Field someTime = registerField(messageEgFields, 127, "SomeTimeField", Type.UTCTIMESTAMP);
+        final Field charNoEnumField = registerField(messageEgFields, 144, "CharNoEnumField", Type.CHAR);
         final Field charField = registerField(messageEgFields, 128, "CharField", Type.CHAR)
             .addValue("a", "One")
             .addValue("b", "Two");
@@ -622,6 +639,7 @@ public final class ExampleDictionary
         heartbeat.optionalEntry(dataFieldLength);
         heartbeat.optionalEntry(dataField);
         heartbeat.optionalEntry(charField);
+        heartbeat.optionalEntry(charNoEnumField);
         heartbeat.optionalEntry(multiCharField);
         heartbeat.optionalEntry(multiValStringField);
         heartbeat.optionalEntry(multiStringValField);

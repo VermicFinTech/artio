@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class AcceptorGeneratorTest
     private static final DecoderGenerator DECODER_GENERATOR = new DecoderGenerator(
         MESSAGE_EXAMPLE, 1, TEST_PACKAGE, TEST_PARENT_PACKAGE, TEST_PACKAGE, OUTPUT_MANAGER, ValidationOn.class,
         RejectUnknownFieldOff.class, RejectUnknownEnumValueOn.class, false, false,
-        Generator.RUNTIME_REJECT_UNKNOWN_ENUM_VALUE_PROPERTY, true);
+        Generator.RUNTIME_REJECT_UNKNOWN_ENUM_VALUE_PROPERTY, true, null);
     private static final AcceptorGenerator ACCEPTOR_GENERATOR = new AcceptorGenerator(
         MESSAGE_EXAMPLE, TEST_PACKAGE, OUTPUT_MANAGER);
     private static Class<?> acceptor;

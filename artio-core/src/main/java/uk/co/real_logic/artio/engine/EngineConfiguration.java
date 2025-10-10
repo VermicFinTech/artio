@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -324,6 +324,8 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
     private long timeIndexReplayFlushIntervalInNs = DEFAULT_TIME_INDEX_FLUSH_INTERVAL_IN_NS;
     private CancelOnDisconnectOption cancelOnDisconnectOption = DO_NOT_CANCEL_ON_DISCONNECT_OR_LOGOUT;
     private int cancelOnDisconnectTimeoutWindowInMs = DEFAULT_CANCEL_ON_DISCONNECT_TIMEOUT_WINDOW_IN_MS;
+    private long framerCycleThresholdNs = DEFAULT_CYCLE_THRESHOLD_NS;
+    private long indexerCycleThresholdNs = DEFAULT_CYCLE_THRESHOLD_NS;
 
     private EngineReproductionConfiguration reproductionConfiguration;
     private ReproductionMessageHandler reproductionMessageHandler = (connectionId, bytes) ->
@@ -673,20 +675,8 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
 
     public EngineConfiguration slowConsumerTimeoutInMs(final long slowConsumerTimeoutInMs)
     {
-        validateSlowConsumerAndReplyTimeout(slowConsumerTimeoutInMs, replyTimeoutInMs());
         this.slowConsumerTimeoutInMs = slowConsumerTimeoutInMs;
         return this;
-    }
-
-    private void validateSlowConsumerAndReplyTimeout(
-        final long slowConsumerTimeoutInMs, final long replyTimeoutInMs)
-    {
-        if (slowConsumerTimeoutInMs > replyTimeoutInMs)
-        {
-            throw new IllegalArgumentException("slowConsumerTimeoutInMs (" + slowConsumerTimeoutInMs +
-                ") should not be set below replyTimeoutInMs (" + replyTimeoutInMs + ") as this might lead to" +
-                " slow consumers triggering library timeouts");
-        }
     }
 
     public EngineConfiguration scheduler(final EngineScheduler scheduler)
@@ -1110,7 +1100,7 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
      * Sets the cancel on disconnect timeout handler for FIX sessions. This is invoked when a cancel on disconnect
      * event occurs.
      *
-     * You can see <a href="https://github.com/real-logic/artio/wiki/Cancel-On-Disconnect-Notification">the wiki</a>
+     * You can see <a href="https://github.com/artiofix/artio/wiki/Cancel-On-Disconnect-Notification">the wiki</a>
      * for more details around Cancel on disconnect support.
      *
      * @param cancelOnDisconnectTimeoutHandler the handler to be invoked when a cancel on disconnect event occurs.
@@ -1128,7 +1118,7 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
      * Sets the cancel on disconnect timeout handler for FIXP connections. This is invoked when a cancel on disconnect
      * event occurs.
      *
-     * You can see <a href="https://github.com/real-logic/artio/wiki/Cancel-On-Disconnect-Notification">the wiki</a>
+     * You can see <a href="https://github.com/artiofix/artio/wiki/Cancel-On-Disconnect-Notification">the wiki</a>
      * for more details around Cancel on disconnect support.
      *
      * @param fixPCancelOnDisconnectTimeoutHandler the handler to be invoked when a cancel on disconnect event occurs.
@@ -1306,6 +1296,32 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
         return this;
     }
 
+    /**
+     * Set a threshold for the framer work cycle time which when exceeded it will increment the
+     * framer cycle time exceeded count.
+     *
+     * @param framerCycleThresholdNs value in nanoseconds. The value 0 will disable duty cycle tracking on the framer.
+     * @return this for fluent API.
+     */
+    public EngineConfiguration framerCycleThresholdNs(final long framerCycleThresholdNs)
+    {
+        this.framerCycleThresholdNs = framerCycleThresholdNs;
+        return this;
+    }
+
+    /**
+     * Set a threshold for the indexer work cycle time which when exceeded it will increment the
+     * indexer cycle time exceeded count.
+     *
+     * @param indexerCycleThresholdNs value in nanoseconds. The value 0 will disable duty cycle tracking on the indexer.
+     * @return this for fluent API.
+     */
+    public EngineConfiguration indexerCycleThresholdNs(final long indexerCycleThresholdNs)
+    {
+        this.indexerCycleThresholdNs = indexerCycleThresholdNs;
+        return this;
+    }
+
     // ---------------------
     // END SETTERS
     // ---------------------
@@ -1459,7 +1475,6 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
      */
     public EngineConfiguration replyTimeoutInMs(final long replyTimeoutInMs)
     {
-        validateSlowConsumerAndReplyTimeout(slowConsumerTimeoutInMs, replyTimeoutInMs);
         super.replyTimeoutInMs(replyTimeoutInMs);
         return this;
     }
@@ -2036,6 +2051,16 @@ public final class EngineConfiguration extends CommonConfiguration implements Au
     public int cancelOnDisconnectTimeoutWindowInMs()
     {
         return cancelOnDisconnectTimeoutWindowInMs;
+    }
+
+    public long framerCycleThresholdNs()
+    {
+        return framerCycleThresholdNs;
+    }
+
+    public long indexerCycleThresholdNs()
+    {
+        return indexerCycleThresholdNs;
     }
 
     public boolean indexChecksumEnabled()

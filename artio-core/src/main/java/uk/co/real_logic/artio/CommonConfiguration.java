@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,8 @@ public class CommonConfiguration
     public static final long DEFAULT_MAX_FIXP_KEEPALIVE_TIMEOUT_IN_MS = MINUTES.toMillis(1);
     public static final long DEFAULT_MIN_FIXP_KEEPALIVE_TIMEOUT_IN_MS = 1;
     public static final long DEFAULT_ACCEPTOR_FIXP_KEEPALIVE_TIMEOUT_IN_MS = SECONDS.toMillis(30);
+
+    public static final long DEFAULT_CYCLE_THRESHOLD_NS = SECONDS.toNanos(1);
 
     public static final boolean RUNNING_ON_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 

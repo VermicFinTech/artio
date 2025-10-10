@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -890,7 +890,7 @@ public class GatewayPublication extends ClaimablePublication
         return awaitingResend ? AwaitingResend.YES : AwaitingResend.NO;
     }
 
-    public long saveReleaseSessionReply(final SessionReplyStatus status, final long replyToId)
+    public long saveReleaseSessionReply(final int libraryId, final SessionReplyStatus status, final long replyToId)
     {
         final long position = claim(RELEASE_SESSION_REPLY_LENGTH);
         if (position < 0)
@@ -901,7 +901,10 @@ public class GatewayPublication extends ClaimablePublication
         final MutableDirectBuffer buffer = bufferClaim.buffer();
         final int offset = bufferClaim.offset();
 
-        releaseSessionReply.wrapAndApplyHeader(buffer, offset, header).replyToId(replyToId).status(status);
+        releaseSessionReply.wrapAndApplyHeader(buffer, offset, header)
+            .libraryId(libraryId)
+            .replyToId(replyToId)
+            .status(status);
 
         bufferClaim.commit();
 
@@ -1370,6 +1373,32 @@ public class GatewayPublication extends ClaimablePublication
         final int bodyOffset,
         final int bodyLength)
     {
+        return saveValidResendRequest(
+            sessionId,
+            connectionId,
+            beginSequenceNumber,
+            endSequenceNumber,
+            sequenceIndex,
+            correlationId,
+            ValidResendRequestEncoder.overriddenBeginSequenceNumberNullValue(),
+            bodyBuffer,
+            bodyOffset,
+            bodyLength
+        );
+    }
+
+    public long saveValidResendRequest(
+        final long sessionId,
+        final long connectionId,
+        final long beginSequenceNumber,
+        final long endSequenceNumber,
+        final int sequenceIndex,
+        final long correlationId,
+        final long overriddenBeginSequenceNumber,
+        final DirectBuffer bodyBuffer,
+        final int bodyOffset,
+        final int bodyLength)
+    {
         final long position = claim(VALID_RESEND_REQUEST_LENGTH + bodyLength);
         if (position < 0)
         {
@@ -1387,6 +1416,7 @@ public class GatewayPublication extends ClaimablePublication
             .endSequenceNumber(endSequenceNumber)
             .sequenceIndex(sequenceIndex)
             .correlationId(correlationId)
+            .overriddenBeginSequenceNumber(overriddenBeginSequenceNumber)
             .putBody(bodyBuffer, bodyOffset, bodyLength);
 
         bufferClaim.commit();

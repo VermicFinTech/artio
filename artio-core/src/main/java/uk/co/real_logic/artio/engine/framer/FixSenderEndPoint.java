@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package uk.co.real_logic.artio.engine.framer;
 
 import io.aeron.ExclusivePublication;
 import io.aeron.logbuffer.ControlledFragmentHandler.Action;
-import io.aeron.protocol.DataHeaderFlyweight;
 import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.ExpandableDirectByteBuffer;
@@ -46,7 +45,6 @@ import static uk.co.real_logic.artio.LogTag.FIX_MESSAGE_TCP;
 import static uk.co.real_logic.artio.dictionary.SessionConstants.LOGON_MESSAGE_TYPE;
 import static uk.co.real_logic.artio.messages.DisconnectReason.EXCEPTION;
 import static uk.co.real_logic.artio.messages.DisconnectReason.SLOW_CONSUMER;
-import static uk.co.real_logic.artio.messages.ThrottleRejectDecoder.businessRejectRefIDHeaderLength;
 
 class FixSenderEndPoint extends SenderEndPoint
 {
@@ -82,10 +80,6 @@ class FixSenderEndPoint extends SenderEndPoint
             "SEP.timeoutSlowDisconnect, conn=%s,sess=%s,time=%s,maxBytesInBuffer=%s,noWriteSince=%s");
     }
 
-    private static final int HEADER_LENGTH = MessageHeaderDecoder.ENCODED_LENGTH;
-    static final int START_REPLAY_LENGTH = HEADER_LENGTH + StartReplayDecoder.BLOCK_LENGTH;
-    // Need to give Aeron the start position of the previous message, so include the DHF, naturally term aligned
-    static final int TOTAL_START_REPLAY_LENGTH = START_REPLAY_LENGTH + DataHeaderFlyweight.HEADER_LENGTH;
     public static final int THROTTLE_BUSINESS_REJECT_REASON = 99;
 
     private final long connectionId;
@@ -111,6 +105,8 @@ class FixSenderEndPoint extends SenderEndPoint
     private long replayCorrelationId;
     private boolean requiresRetry;
     private int reattemptBytesWritten = NO_REATTEMPT;
+
+    private boolean disconnected;
 
     FixSenderEndPoint(
         final long connectionId,
@@ -239,11 +235,6 @@ class FixSenderEndPoint extends SenderEndPoint
         return throttleRejectBuilder().configureThrottle(throttleWindowInMs, throttleLimitOfMessages);
     }
 
-    private int throttleRejectLength(final int businessRejectRefIDLength)
-    {
-        return ThrottleRejectDecoder.BLOCK_LENGTH + businessRejectRefIDHeaderLength() + businessRejectRefIDLength;
-    }
-
     public void onMessage(
         final DirectBuffer directBuffer, final int offset, final int bodyLength, final int metaDataLength,
         final int seqNum, final long timeInMs, final boolean replay)
@@ -256,7 +247,7 @@ class FixSenderEndPoint extends SenderEndPoint
             {
                 enqueueMessage(directBuffer, offset, bodyLength, metaDataOffset, metaDataLength, seqNum, replay);
 
-                if (requiresRetry)
+                if (requiresRetry && !disconnected)
                 {
                     reattempt();
                 }
@@ -684,6 +675,7 @@ class FixSenderEndPoint extends SenderEndPoint
     private void disconnectEndpoint(final DisconnectReason reason)
     {
         receiverEndPoint.completeDisconnect(reason);
+        disconnected = true;
     }
 
     public Action onReplayComplete(final long correlationId)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,16 +266,7 @@ public class Session
         this.formatters = formatters;
 
         connectionId(connectionId);
-        // If we're an offline session that has never been corrected then we need to set the initial sequence index.
-        if (state == DISCONNECTED && sequenceIndex == UNKNOWN_SEQUENCE_INDEX)
-        {
-            sequenceIndex(0);
-        }
-        else
-        {
-            sequenceIndex(sequenceIndex);
-        }
-
+        setCorrectedSequenceIndex(state, sequenceIndex);
         state(state);
         heartbeatIntervalInS(heartbeatIntervalInS);
         lastMsgSeqNumProcessed = this.enableLastMsgSeqNumProcessed ? 0 : NO_LAST_MSG_SEQ_NUM_PROCESSED;
@@ -484,7 +475,7 @@ public class Session
 
     /**
      * Gets the slow consumer status for this session. See
-     * <a href="https://github.com/real-logic/artio/wiki/Performance-and-Fairness#slow-consumer-support">the wiki</a>
+     * <a href="https://github.com/artiofix/artio/wiki/Performance-and-Fairness#slow-consumer-support">the wiki</a>
      * for details on what a slow consumer is.
      *
      * @return true if the session is a slow consumer, false otherwise.
@@ -660,10 +651,15 @@ public class Session
      */
     public int prepare(final SessionHeaderEncoder header)
     {
+        return prepare(header, clock.nanoTime());
+    }
+
+    private int prepare(final SessionHeaderEncoder header, final long sendingTimeNanos)
+    {
         final int sentSeqNum = newSentSeqNum();
         header
             .msgSeqNum(sentSeqNum)
-            .sendingTime(timestampEncoder.buffer(), timestampEncoder.encode(epochFractionClock.epochFractionTime()));
+            .sendingTime(timestampEncoder.buffer(), timestampEncoder.updateFrom(sendingTimeNanos, NANOSECONDS));
 
         if (enableLastMsgSeqNumProcessed)
         {
@@ -722,14 +718,16 @@ public class Session
         final DirectBuffer metaDataBuffer,
         final int metaDataUpdateOffset)
     {
-        final int sentSeqNum = prepare(encoder.header());
+        final long sendingTime = clock.nanoTime();
+        final int sentSeqNum = prepare(encoder.header(), sendingTime);
 
         final long result = encoder.encode(asciiBuffer, 0);
         final int length = Encoder.length(result);
         final int offset = Encoder.offset(result);
         final long type = encoder.messageType();
 
-        return trySend(asciiBuffer, offset, length, sentSeqNum, type, metaDataBuffer, metaDataUpdateOffset);
+        return trySend(asciiBuffer, offset, length, sentSeqNum, type, sendingTime,
+            metaDataBuffer, metaDataUpdateOffset);
     }
 
     /**
@@ -776,12 +774,39 @@ public class Session
         final DirectBuffer metaDataBuffer,
         final int metaDataUpdateOffset)
     {
+        return trySend(messageBuffer, offset, length, seqNum, messageType, clock.nanoTime(),
+            metaDataBuffer, metaDataUpdateOffset);
+    }
+
+    private long trySend(
+        final DirectBuffer messageBuffer,
+        final int offset,
+        final int length,
+        final int seqNum,
+        final long messageType,
+        final long timestamp,
+        final DirectBuffer metaDataBuffer,
+        final int metaDataUpdateOffset)
+    {
         // If someone attempts to send a message during a logon / logout or offline then we should archive the message
         // but not send it.
         final long connectionId = this.state == ACTIVE ? this.connectionId : NO_CONNECTION_ID;
+        final long sessionId = id();
+        final int sequenceIndex1 = sequenceIndex();
         final long position = outboundPublication.saveMessage(
-            messageBuffer, offset, length, libraryId, messageType, id(), sequenceIndex(), connectionId, OK, seqNum,
-            metaDataBuffer, metaDataUpdateOffset);
+            messageBuffer,
+            offset,
+            length,
+            libraryId,
+            messageType,
+            sessionId,
+            sequenceIndex1,
+            connectionId,
+            OK,
+            seqNum,
+            timestamp,
+            metaDataBuffer,
+            metaDataUpdateOffset);
 
         if (position > 0)
         {
@@ -891,7 +916,12 @@ public class Session
             nextReceivedMessageSequenceNumber <= this.lastReceivedMsgSeqNum + 1;
         if (resetsSentSequenceNumbers != resetReceivedSequenceNumbers)
         {
-            throw new IllegalArgumentException("Cannot reset received but not sent sequence numbers");
+            throw new IllegalArgumentException(
+                "Cannot reset only received (" +
+                (lastReceivedMsgSeqNum + 1) + "->" + nextReceivedMessageSequenceNumber +
+                ") or sent (" +
+                (lastSentMsgSeqNum + 1) + "->" + nextSentMessageSequenceNumber +
+                ") sequence numbers for session " + id);
         }
 
         final long position = trySendSequenceReset(nextSentMessageSequenceNumber);
@@ -2102,13 +2132,20 @@ public class Session
 
         if (resendRequestResponse.result())
         {
+            int overriddenBeginSeqNum = resendRequestResponse.overriddenBeginSequenceNumber();
+            if (overriddenBeginSeqNum != ResendRequestResponse.USE_BEGIN_SEQ_NO)
+            {
+                overriddenBeginSeqNum = Math.max(overriddenBeginSeqNum, beginSeqNum);
+                overriddenBeginSeqNum = Math.min(overriddenBeginSeqNum, correctedEndSeqNo);
+            }
+
             final long correlationId = generateReplayCorrelationId();
 
             // Notify the sender end point that a replay is going to happen.
             if (!backpressuredResendRequestResponse || backpressuredOutboundValidResendRequest)
             {
                 if (saveValidResendRequest(beginSeqNum, messageBuffer, messageOffset, messageLength, correctedEndSeqNo,
-                    correlationId, outboundPublication))
+                    correlationId, overriddenBeginSeqNum, outboundPublication))
                 {
                     lastReceivedMsgSeqNum(oldLastReceivedMsgSeqNum);
                     backpressuredResendRequestResponse = true;
@@ -2120,7 +2157,7 @@ public class Session
             }
 
             if (saveValidResendRequest(beginSeqNum, messageBuffer, messageOffset, messageLength, correctedEndSeqNo,
-                correlationId, inboundPublication))
+                correlationId, overriddenBeginSeqNum, inboundPublication))
             {
                 lastReceivedMsgSeqNum(oldLastReceivedMsgSeqNum);
                 backpressuredResendRequestResponse = true;
@@ -2159,7 +2196,8 @@ public class Session
 
     private boolean saveValidResendRequest(
         final int beginSeqNum, final AsciiBuffer messageBuffer, final int messageOffset, final int messageLength,
-        final int correctedEndSeqNo, final long correlationId, final GatewayPublication publication)
+        final int correctedEndSeqNo, final long correlationId, final int overriddenBeginSeqNum,
+        final GatewayPublication publication)
     {
         return Pressure.isBackPressured(publication.saveValidResendRequest(
             id,
@@ -2168,6 +2206,7 @@ public class Session
             correctedEndSeqNo,
             sequenceIndex,
             correlationId,
+            overriddenBeginSeqNum,
             messageBuffer,
             messageOffset,
             messageLength));
@@ -2755,5 +2794,18 @@ public class Session
     private void text(final byte[] logoutText)
     {
         this.logoutText = logoutText;
+    }
+
+    void setCorrectedSequenceIndex(final SessionState state, final int sequenceIndex)
+    {
+        // If we're an offline session that has never been corrected then we need to set the initial sequence index.
+        if (state == DISCONNECTED && sequenceIndex == UNKNOWN_SEQUENCE_INDEX)
+        {
+            sequenceIndex(0);
+        }
+        else
+        {
+            sequenceIndex(sequenceIndex);
+        }
     }
 }

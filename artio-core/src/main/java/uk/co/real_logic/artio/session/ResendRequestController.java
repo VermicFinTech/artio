@@ -53,7 +53,7 @@ public interface ResendRequestController
      * @param remainingReplaysInFlight the number of remaining replays in flight for this Session after the completion of this
      *                        replay.
      */
-    default void onResendComplete(Session session, final int remainingReplaysInFlight)
+    default void onResendComplete(final Session session, final int remainingReplaysInFlight)
     {
         // default and empty for backwards compatibility reasons.
     }

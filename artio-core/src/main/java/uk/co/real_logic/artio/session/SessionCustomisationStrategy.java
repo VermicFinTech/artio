@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public interface SessionCustomisationStrategy
      * @param header the header about to be sent
      * @param sessionId the surrogate id for the Session that is being customised
      */
-    default void configureHeader(SessionHeaderEncoder header, long sessionId)
+    default void configureHeader(final SessionHeaderEncoder header, final long sessionId)
     {
     }
 }

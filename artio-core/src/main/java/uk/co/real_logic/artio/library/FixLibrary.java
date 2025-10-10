@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,7 @@ public class FixLibrary extends GatewayProcess
     {
         poller.startConnecting();
         scheduler.launch(configuration, errorHandler, monitoringCompositeAgent, conductorAgent());
+        poller.onStart();
         return this;
     }
 
@@ -502,8 +503,8 @@ public class FixLibrary extends GatewayProcess
      *
      * @param configuration the configuration for this Session.
      * @return a reply object wrapping the Connection itself.
-     * @see <a href="https://github.com/real-logic/artio/wiki/ILink-3-Support">
-     *     https://github.com/real-logic/artio/wiki/ILink-3-Support</a>
+     * @see <a href="https://github.com/artiofix/artio/wiki/ILink-3-Support">
+     *     https://github.com/artiofix/artio/wiki/ILink-3-Support</a>
      */
     public Reply<ILink3Connection> initiate(final ILink3ConnectionConfiguration configuration)
     {

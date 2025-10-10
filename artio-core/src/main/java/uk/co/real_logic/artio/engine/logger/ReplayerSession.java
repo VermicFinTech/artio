@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import io.aeron.logbuffer.ControlledFragmentHandler;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.status.AtomicCounter;
 import uk.co.real_logic.artio.Pressure;
-
-import static uk.co.real_logic.artio.LogTag.REPLAY;
 
 abstract class ReplayerSession implements ControlledFragmentHandler
 {
@@ -77,19 +75,7 @@ abstract class ReplayerSession implements ControlledFragmentHandler
         this.bytesInBuffer = bytesInBuffer;
     }
 
-    void query()
-    {
-        replayOperation = replayQuery.query(
-            sessionId,
-            beginSeqNo,
-            sequenceIndex,
-            endSeqNo,
-            sequenceIndex,
-            REPLAY,
-            messageTracker());
-    }
-
-    abstract MessageTracker messageTracker();
+    abstract void query();
 
     boolean claimBuffer(final int newLength, final int messageLength)
     {

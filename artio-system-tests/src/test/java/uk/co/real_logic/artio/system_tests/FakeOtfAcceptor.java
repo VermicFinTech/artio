@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import uk.co.real_logic.artio.util.CharFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -159,7 +160,7 @@ public class FakeOtfAcceptor implements OtfMessageAcceptor
     {
         return messages()
             .stream()
-            .filter((fixMessage) -> fixMessage.get(MSG_TYPE).equals(messageType));
+            .filter((fixMessage) -> Objects.equals(fixMessage.get(MSG_TYPE), messageType));
     }
 
     public Stream<FixMessage> receivedReplay(final String messageType, final int sequenceNumber)

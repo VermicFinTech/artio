@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package uk.co.real_logic.artio;
 import io.aeron.driver.MediaDriver;
 import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.SigInt;
+import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.status.AtomicCounter;
 import uk.co.real_logic.artio.library.FixLibrary;
 import uk.co.real_logic.artio.library.LibraryConfiguration;
@@ -52,13 +52,14 @@ public final class SampleUtil
         final Thread thread = AgentRunner.startOnThread(runner);
 
         final AtomicBoolean running = new AtomicBoolean(true);
-        SigInt.register(() -> running.set(false));
-
-        while (running.get())
+        try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier(() -> running.set(false)))
         {
-            Thread.sleep(100);
-        }
+            while (running.get())
+            {
+                Thread.sleep(100);
+            }
 
-        thread.join();
+            thread.join();
+        }
     }
 }

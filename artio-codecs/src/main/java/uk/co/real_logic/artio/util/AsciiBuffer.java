@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package uk.co.real_logic.artio.util;
 
 import org.agrona.DirectBuffer;
 import uk.co.real_logic.artio.fields.DecimalFloat;
+import uk.co.real_logic.artio.util.float_parsing.DecimalFloatOverflowHandler;
 
 /**
  * Mutable String class that flyweights a data buffer. This assumes a US-ASCII encoding
@@ -67,7 +68,20 @@ public interface AsciiBuffer extends DirectBuffer
 
     long getMessageType(int offset, int length);
 
-    DecimalFloat getFloat(DecimalFloat number, int offset, int length);
+    DecimalFloat getFloat(
+        DecimalFloat number,
+        int offset,
+        int length,
+        int tagId,
+        DecimalFloatOverflowHandler decimalFloatOverflowHandler);
+
+    default DecimalFloat getFloat(
+        final DecimalFloat number,
+        final int offset,
+        final int length)
+    {
+        return getFloat(number, offset, length, -1, null);
+    }
 
     int getLocalMktDate(int offset, int length);
 

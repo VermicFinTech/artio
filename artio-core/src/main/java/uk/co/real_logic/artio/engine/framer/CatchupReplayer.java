@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,6 +255,11 @@ public class CatchupReplayer implements ControlledFragmentHandler, Continuation
             srcOffset + MessageHeaderDecoder.ENCODED_LENGTH,
             messageHeaderDecoder.blockLength(),
             version);
+
+        if (messageDecoder.status() == CATCHUP_REPLAY)
+        {
+            return CONTINUE;
+        }
 
         final long messageType = MessageTypeExtractor.getMessageType(messageDecoder);
 

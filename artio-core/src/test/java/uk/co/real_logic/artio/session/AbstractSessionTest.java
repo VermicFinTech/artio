@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,20 @@ public abstract class AbstractSessionTest
             anyLong(),
             any(),
             anyInt(),
+            eq(null),
+            eq(0))).thenReturn(POSITION);
+        when(mockPublication.saveMessage(
+            bufferCaptor.capture(),
+            offsetCaptor.capture(),
+            lengthCaptor.capture(),
+            anyInt(),
+            anyLong(),
+            anyLong(),
+            anyInt(),
+            anyLong(),
+            any(),
+            anyInt(),
+            anyLong(),
             eq(null),
             eq(0))).thenReturn(POSITION);
 

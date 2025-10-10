@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import io.aeron.archive.ArchivingMediaDriver;
 import io.aeron.driver.MediaDriver.Context;
 import org.agrona.IoUtil;
 import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.SigInt;
+import org.agrona.concurrent.ShutdownSignalBarrier;
 import uk.co.real_logic.artio.CommonConfiguration;
 import uk.co.real_logic.artio.SampleUtil;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
@@ -96,17 +96,20 @@ public final class SampleServer
             try (FixLibrary library = SampleUtil.blockingConnect(libraryConfiguration))
             {
                 final AtomicBoolean running = new AtomicBoolean(true);
-                SigInt.register(() -> running.set(false));
-
-                while (running.get())
+                try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier(() -> running.set(false)))
                 {
-                    idleStrategy.idle(library.poll(1));
 
-                    if (session != null && session.state() == DISCONNECTED)
+                    while (running.get())
                     {
-                        break;
+                        idleStrategy.idle(library.poll(1));
+
+                        if (session != null && session.state() == DISCONNECTED)
+                        {
+                            break;
+                        }
                     }
                 }
+
             }
         }
 

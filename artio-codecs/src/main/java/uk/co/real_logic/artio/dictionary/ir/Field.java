@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,12 @@ public final class Field implements Element
         return !values.isEmpty();
     }
 
+    @Override
+    public boolean isCharOrBooleanBasedField()
+    {
+        return type.isCharBased || type.isBooleanBased;
+    }
+
     public boolean hasSharedSometimesEnumClash()
     {
         return hasSharedSometimesEnumClash;
@@ -180,7 +186,7 @@ public final class Field implements Element
         XMLDATA(false, false, false, false, false),
 
         // Boolean types
-        BOOLEAN(false, false, false, false, false),
+        BOOLEAN(false, false, false, false, false, true),
 
         UTCTIMESTAMP(true, false, false, false, false), // YYYYMMDD-HH:MM:SS or YYYYMMDD-HH:MM:SS.sss
         UTCTIMEONLY(true, false, false, false, false), // HH:MM:SS or HH:MM:SS.sss
@@ -195,6 +201,24 @@ public final class Field implements Element
         private final boolean isFloatBased;
         private final boolean isMultiValue;
         private final boolean isCharBased;
+        private final boolean isBooleanBased;
+
+        Type(
+            final boolean isStringBased,
+            final boolean isIntBased,
+            final boolean isFloatBased,
+            final boolean isMultiValue,
+            final boolean isCharBased,
+            final boolean isBooleanBased
+        )
+        {
+            this.isStringBased = isStringBased;
+            this.isIntBased = isIntBased;
+            this.isFloatBased = isFloatBased;
+            this.isMultiValue = isMultiValue;
+            this.isCharBased = isCharBased;
+            this.isBooleanBased = isBooleanBased;
+        }
 
         Type(
             final boolean isStringBased,
@@ -204,11 +228,7 @@ public final class Field implements Element
             final boolean isCharBased
         )
         {
-            this.isStringBased = isStringBased;
-            this.isIntBased = isIntBased;
-            this.isFloatBased = isFloatBased;
-            this.isMultiValue = isMultiValue;
-            this.isCharBased = isCharBased;
+            this(isStringBased, isIntBased, isFloatBased, isMultiValue, isCharBased, false);
         }
 
         public boolean isStringBased()
@@ -229,6 +249,11 @@ public final class Field implements Element
         public boolean isCharBased()
         {
             return isCharBased;
+        }
+
+        public boolean isCharOrBooleanBased()
+        {
+            return isCharBased || isBooleanBased;
         }
 
         public boolean isDataBased()

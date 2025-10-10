@@ -115,8 +115,7 @@ class InternalBinaryEntryPointConnection
             lastConnectPayload,
             configuration,
             context,
-            new BinaryEntryPointProxy(
-            protocol, dissector,
+            new BinaryEntryPointProxy(protocol, dissector,
             connectionId, outboundPublication.dataPublication(), configuration.epochNanoClock()),
             dissector,
             protocol);

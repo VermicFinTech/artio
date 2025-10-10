@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited, Adaptive Financial Consulting Ltd., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,9 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 import uk.co.real_logic.artio.*;
-import uk.co.real_logic.artio.builder.ExampleMessageEncoder;
-import uk.co.real_logic.artio.builder.ExecutionReportEncoder;
-import uk.co.real_logic.artio.builder.ResendRequestEncoder;
-import uk.co.real_logic.artio.builder.UserRequestEncoder;
+import uk.co.real_logic.artio.builder.*;
+import uk.co.real_logic.artio.decoder.ThreeCharacterTypeMessageDecoder;
+import uk.co.real_logic.artio.decoder.TwoCharacterTypeMessageDecoder;
 import uk.co.real_logic.artio.engine.ConnectedSessionInfo;
 import uk.co.real_logic.artio.engine.EngineConfiguration;
 import uk.co.real_logic.artio.engine.FixEngine;
@@ -117,6 +116,26 @@ public class GatewayToGatewaySystemTest extends AbstractGatewayToGatewaySystemTe
         assertSequenceIndicesAre(0);
 
         messageTimingHandler.verifyConsecutiveSequenceNumbers(2);
+    }
+
+    @Test(timeout = TEST_TIMEOUT_IN_MS)
+    public void messagesWithTypesLongerThanOneCharacterCanBeExchanged()
+    {
+        acquireAcceptingSession();
+
+        final TwoCharacterTypeMessageEncoder twoCharacterTypeMessage = new TwoCharacterTypeMessageEncoder();
+        twoCharacterTypeMessage.text("two");
+        testSystem.awaitSend(() -> initiatingSession.trySend(twoCharacterTypeMessage));
+
+        final ThreeCharacterTypeMessageEncoder threeCharacterTypeMessage = new ThreeCharacterTypeMessageEncoder();
+        threeCharacterTypeMessage.text("three");
+        testSystem.awaitSend(() -> initiatingSession.trySend(threeCharacterTypeMessage));
+
+        final FixMessage two = testSystem.awaitMessageOf(acceptingOtfAcceptor, "@A");
+        assertEquals(TwoCharacterTypeMessageDecoder.MESSAGE_TYPE, two.messageType());
+
+        final FixMessage three = testSystem.awaitMessageOf(acceptingOtfAcceptor, "@AB");
+        assertEquals(ThreeCharacterTypeMessageDecoder.MESSAGE_TYPE, three.messageType());
     }
 
     @Theory
@@ -354,6 +373,63 @@ public class GatewayToGatewaySystemTest extends AbstractGatewayToGatewaySystemTe
         });
 
         assertEquals(2, fakeResendRequestController.callCount());
+    }
+
+    @Test(timeout = TEST_TIMEOUT_IN_MS)
+    public void shouldControlResendRequestsWithOverriddenBeginSeqNo()
+    {
+        fakeResendRequestController.maxResends(1);
+        fakeResendRequestController.resend(true);
+        fakeResendRequestController.overriddenBeginSeqNo(10);
+
+        acquireAcceptingSession();
+
+        for (int i = 0; i < 10; i++)
+        {
+            exchangeExecutionReport(initiatingSession, acceptingOtfAcceptor);
+        }
+
+        testSystem.await("Failed to receive messages", () ->
+        {
+            final long totalReceivedMessages = acceptingOtfAcceptor.messages().size();
+            return totalReceivedMessages >= 10;
+        });
+
+        acceptingOtfAcceptor.messages().clear();
+
+        acceptorSendsResendRequest(1, 0);
+
+        testSystem.await("Failed to receive resent messages", () ->
+        {
+            final long totalReceivedMessages = acceptingOtfAcceptor.messages().size();
+
+            if (totalReceivedMessages < 3)
+            {
+                return false;
+            }
+            else
+            {
+                final List<FixMessage> fixMessageList = acceptingOtfAcceptor.messages();
+
+                final FixMessage gapFill = fixMessageList.get(0);
+                assertEquals(SEQUENCE_RESET_MESSAGE, gapFill.messageType());
+                assertEquals(1, gapFill.messageSequenceNumber());
+                assertEquals("Y", gapFill.gapFill());
+                assertEquals(10, gapFill.getInt(Constants.NEW_SEQ_NO));
+
+                final FixMessage executionReportNine = fixMessageList.get(1);
+                assertEquals(EXECUTION_REPORT_MESSAGE, executionReportNine.messageType());
+                assertEquals(10, executionReportNine.messageSequenceNumber());
+
+                final FixMessage executionReportTen = fixMessageList.get(2);
+                assertEquals(EXECUTION_REPORT_MESSAGE, executionReportTen.messageType());
+                assertEquals(11, executionReportTen.messageSequenceNumber());
+
+                return true;
+            }
+        });
+
+        assertEquals(1, fakeResendRequestController.callCount());
     }
 
     // Test exists to replicate a faily complex bug involving a sequence number issue after a library timeout.

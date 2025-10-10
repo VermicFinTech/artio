@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited., Monotonic Ltd.
+ * Copyright 2015-2025 Real Logic Limited., Monotonic Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1398,7 +1398,8 @@ public final class DebugLogger
 
         public void logSbeDecoder(final LogTag tag, final String prefix, final Consumer<StringBuilder> appendTo)
         {
-            try {
+            try
+            {
                 appendStart();
                 builder.append(prefix);
                 appendTo.accept(builder);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import uk.co.real_logic.artio.fields.*;
 import uk.co.real_logic.artio.util.float_parsing.AsciiBufferCharReader;
+import uk.co.real_logic.artio.util.float_parsing.DecimalFloatOverflowHandler;
 import uk.co.real_logic.artio.util.float_parsing.DecimalFloatParser;
 
 import java.nio.ByteBuffer;
@@ -167,9 +168,21 @@ public final class MutableAsciiBuffer extends UnsafeBuffer implements AsciiBuffe
     }
 
     @SuppressWarnings("FinalParameters")
-    public DecimalFloat getFloat(final DecimalFloat number, int offset, int length)
+    public DecimalFloat getFloat(
+        final DecimalFloat number,
+        int offset,
+        int length,
+        int tagId,
+        DecimalFloatOverflowHandler decimalFloatOverflowHandler)
     {
-        return DecimalFloatParser.extract(number, AsciiBufferCharReader.INSTANCE, this, offset, length);
+        return DecimalFloatParser.extract(
+          number,
+          AsciiBufferCharReader.INSTANCE,
+          this,
+          offset,
+          length,
+          tagId,
+          decimalFloatOverflowHandler);
     }
 
     public int getLocalMktDate(final int offset, final int length)

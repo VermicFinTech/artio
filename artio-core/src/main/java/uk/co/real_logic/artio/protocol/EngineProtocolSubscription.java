@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,8 +141,16 @@ public final class EngineProtocolSubscription implements ControlledFragmentHandl
         final SeqIndexSyncDecoder seqIndexSync = this.seqIndexSync;
         seqIndexSync.wrap(buffer, offset, blockLength, version);
 
+        final int libraryId = seqIndexSync.libraryId();
+        final Action action = handler.onApplicationHeartbeat(
+            libraryId, header.sessionId(), SeqIndexSyncDecoder.TEMPLATE_ID, 0);
+        if (action != null)
+        {
+            return action; // Continue processing messages, but not this message.
+        }
+
         return handler.onSeqIndexSync(
-            seqIndexSync.libraryId(),
+            libraryId,
             seqIndexSync.sessionId(),
             seqIndexSync.sequenceIndex());
     }
@@ -153,8 +161,16 @@ public final class EngineProtocolSubscription implements ControlledFragmentHandl
         final ThrottleConfigurationDecoder throttleConfiguration = this.throttleConfiguration;
         throttleConfiguration.wrap(buffer, offset, blockLength, version);
 
+        final int libraryId = throttleConfiguration.libraryId();
+        final Action action = handler.onApplicationHeartbeat(
+            libraryId, header.sessionId(), ThrottleConfigurationDecoder.TEMPLATE_ID, 0);
+        if (action != null)
+        {
+            return action; // Continue processing messages, but not this message.
+        }
+
         return handler.onThrottleConfiguration(
-            throttleConfiguration.libraryId(),
+            libraryId,
             throttleConfiguration.correlationId(),
             throttleConfiguration.session(),
             throttleConfiguration.throttleWindowInMs(),

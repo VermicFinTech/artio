@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public interface SessionHandler
     /**
      * Invoked if a session has been detected as being, or no longer being demarcated as a slow
      * session. See
-     * <a href="https://github.com/real-logic/artio/wiki/Performance-and-Fairness#slow-consumer-support">the wiki</a>
+     * <a href="https://github.com/artiofix/artio/wiki/Performance-and-Fairness#slow-consumer-support">the wiki</a>
      * for details on what a slow consumer is.
      *
      * @param libraryId the id of library which the session used to owned by.

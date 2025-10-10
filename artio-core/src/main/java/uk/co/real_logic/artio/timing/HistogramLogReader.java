@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.agrona.IoUtil;
 import org.agrona.LangUtil;
 import org.agrona.collections.Int2ObjectHashMap;
 import org.agrona.concurrent.BackoffIdleStrategy;
-import org.agrona.concurrent.SigInt;
+import org.agrona.concurrent.ShutdownSignalBarrier;
 import uk.co.real_logic.artio.engine.ByteBufferUtil;
 
 import java.io.File;
@@ -59,9 +59,9 @@ public class HistogramLogReader implements AutoCloseable
             MINUTES.toNanos(1));
 
         final AtomicBoolean running = new AtomicBoolean(true);
-        SigInt.register(() -> running.set(false));
 
-        try (HistogramLogReader logReader = new HistogramLogReader(file))
+        try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier(() -> running.set(false));
+            HistogramLogReader logReader = new HistogramLogReader(file))
         {
             do
             {

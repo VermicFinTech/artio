@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited., Adaptive Financial Consulting Ltd.
+ * Copyright 2015-2025 Real Logic Limited., Adaptive Financial Consulting Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class ReadOnlyDecimalFloat implements Comparable<ReadOnlyDecimalFloat>
     private static final long VALUE_NAN_VALUE = Long.MIN_VALUE;
     private static final double DOUBLE_NAN_VALUE = Double.NaN;
 
-    private static final long VALUE_MAX_VAL = 999_999_999_999_999_999L;
+    public static final long VALUE_MAX_VAL = 999_999_999_999_999_999L;
     private static final long VALUE_MIN_VAL = -VALUE_MAX_VAL;
     private static final int SCALE_MAX_VAL = 127;
     private static final int SCALE_MIN_VAL = 0;

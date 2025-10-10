@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 Real Logic Limited.
+ * Copyright 2015-2025 Real Logic Limited.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package uk.co.real_logic.artio.library;
 
 import io.aeron.Subscription;
+import io.aeron.driver.DutyCycleTracker;
 import org.agrona.LangUtil;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.status.AtomicCounter;
@@ -90,6 +91,7 @@ public class LibraryPollerTest
         when(transport.outboundPublication()).thenReturn(outboundPublication);
         when(transport.inboundSubscription()).thenReturn(inboundSubscription);
 
+        when(counters.getLibraryDutyCycleTracker(anyInt(), anyLong())).thenReturn(mock(DutyCycleTracker.class));
         when(counters.receivedMsgSeqNo(anyLong(), anyLong())).thenReturn(mock(AtomicCounter.class));
         when(counters.sentMsgSeqNo(anyLong(), anyLong())).thenReturn(mock(AtomicCounter.class));
 
